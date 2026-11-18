@@ -1,0 +1,227 @@
+/* ==========================================
+   DEVFLOW - TIPTAP EDITOR THEME
+========================================== */
+
+.simple-editor-wrapper {
+    --editor-bg: #080f20;
+    --editor-border: #1e293b;
+    --editor-text: #f1f5f9;
+    --editor-muted: #94a3b8;
+    --editor-accent: #ff8a00;
+    --editor-surface: #111b30;
+
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--editor-border);
+    border-radius: 10px;
+    background: var(--editor-bg);
+    color: var(--editor-text);
+}
+
+/* Editor content container */
+.simple-editor-content {
+    background: var(--editor-bg);
+}
+
+/* Actual editable area */
+.simple-editor {
+    min-height: 280px;
+    padding: 20px 24px;
+    outline: none;
+    color: var(--editor-text);
+    font-size: 15px;
+    line-height: 1.75;
+    caret-color: var(--editor-accent);
+}
+
+/* Paragraphs */
+.simple-editor p {
+    margin: 0 0 14px;
+    color: var(--editor-text);
+}
+
+.simple-editor p:last-child {
+    margin-bottom: 0;
+}
+
+/* Headings */
+.simple-editor h1,
+.simple-editor h2,
+.simple-editor h3,
+.simple-editor h4 {
+    color: #f8fafc;
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+.simple-editor h1 {
+    margin: 28px 0 16px;
+    font-size: 2rem;
+}
+
+.simple-editor h2 {
+    margin: 24px 0 12px;
+    font-size: 1.5rem;
+}
+
+.simple-editor h3 {
+    margin: 20px 0 10px;
+    font-size: 1.2rem;
+}
+
+.simple-editor h4 {
+    margin: 18px 0 8px;
+    font-size: 1.05rem;
+}
+
+/* Text formatting */
+.simple-editor strong {
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+.simple-editor em {
+    font-style: italic;
+}
+
+.simple-editor s {
+    text-decoration: line-through;
+}
+
+/* Links */
+.simple-editor a {
+    color: var(--editor-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+/* Lists */
+.simple-editor ul,
+.simple-editor ol {
+    margin: 14px 0;
+    padding-left: 26px;
+}
+
+.simple-editor ul {
+    list-style: disc;
+}
+
+.simple-editor ol {
+    list-style: decimal;
+}
+
+.simple-editor li {
+    margin: 6px 0;
+    padding-left: 4px;
+}
+
+.simple-editor li p {
+    margin: 0;
+}
+
+/* Task lists */
+.simple-editor ul[data-type="taskList"] {
+    padding-left: 0;
+    list-style: none;
+}
+
+.simple-editor ul[data-type="taskList"] li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.simple-editor ul[data-type="taskList"] li label {
+    margin-top: 5px;
+}
+
+.simple-editor ul[data-type="taskList"] li > div {
+    flex: 1;
+}
+
+/* Blockquote */
+.simple-editor blockquote {
+    margin: 20px 0;
+    padding: 12px 18px;
+    border-left: 3px solid var(--editor-accent);
+    border-radius: 0 6px 6px 0;
+    background: var(--editor-surface);
+    color: #cbd5e1;
+}
+
+/* Inline code */
+.simple-editor code {
+    padding: 3px 6px;
+    border: 1px solid #263650;
+    border-radius: 5px;
+    background: var(--editor-surface);
+    color: #fdba74;
+    font-family: var(--font-geist-mono), monospace;
+    font-size: 0.9em;
+}
+
+/* Code blocks */
+.simple-editor pre {
+    margin: 20px 0;
+    padding: 18px;
+    overflow-x: auto;
+    border: 1px solid var(--editor-border);
+    border-radius: 8px;
+    background: #050b18;
+    color: #e2e8f0;
+}
+
+.simple-editor pre code {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+/* Horizontal rule */
+.simple-editor hr {
+    margin: 24px 0;
+    border: 0;
+    border-top: 1px solid var(--editor-border);
+}
+
+/* Images */
+.simple-editor img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 20px 0;
+    border-radius: 8px;
+}
+
+/* Highlight */
+.simple-editor mark {
+    border-radius: 3px;
+    padding: 1px 3px;
+}
+
+/* Text selection */
+.simple-editor ::selection {
+    background: rgba(255, 138, 0, 0.3);
+}
+
+/* Empty editor placeholder */
+.simple-editor p.is-editor-empty:first-child::before {
+    color: #64748b;
+}
+
+/* Focus */
+.simple-editor:focus {
+    outline: none;
+}
+
+/* Mobile spacing */
+@media (max-width: 640px) {
+    .simple-editor {
+        min-height: 220px;
+        padding: 16px;
+    }
+}

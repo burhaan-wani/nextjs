@@ -1,0 +1,207 @@
+/* =========================================
+   DEVFLOW - TIPTAP THEME
+   ========================================= */
+
+.simple-editor-wrapper {
+    /* Core palette */
+    --df-bg: #080f20;
+    --df-surface: #0d172b;
+    --df-elevated: #111b30;
+    --df-border: #1e293b;
+    --df-text: #f1f5f9;
+    --df-muted: #94a3b8;
+    --df-subtle: #64748b;
+    --df-accent: #ff8a00;
+    --df-accent-hover: #e97900;
+
+    /* Tiptap toolbar */
+    --tt-toolbar-bg-color: var(--df-surface);
+    --tt-toolbar-border-color: var(--df-border);
+
+    color: var(--df-text);
+    background: var(--df-bg);
+    border: 1px solid var(--df-border);
+    border-radius: 10px;
+    overflow: hidden;
+
+    /* Button defaults */
+    --tt-button-default-bg-color: transparent;
+    --tt-button-default-text-color: var(--df-muted);
+    --tt-button-default-icon-color: var(--df-muted);
+    --tt-button-default-icon-sub-color: var(--df-subtle);
+    --tt-button-default-dropdown-arrows-color: var(--df-subtle);
+
+    /* Button hover */
+    --tt-button-hover-bg-color: #1a2942;
+    --tt-button-hover-text-color: var(--df-text);
+    --tt-button-hover-icon-color: var(--df-text);
+    --tt-button-hover-icon-sub-color: var(--df-muted);
+    --tt-button-hover-dropdown-arrows-color: var(--df-muted);
+
+    /* Button active */
+    --tt-button-active-bg-color: rgba(255, 138, 0, 0.13);
+    --tt-button-active-text-color: #ffb45c;
+    --tt-button-active-icon-color: var(--df-accent);
+    --tt-button-active-icon-sub-color: var(--df-accent);
+    --tt-button-active-dropdown-arrows-color: var(--df-accent);
+    --tt-button-active-hover-bg-color: rgba(255, 138, 0, 0.2);
+
+    /* Emphasized active buttons */
+    --tt-button-active-bg-color-emphasized: var(--df-accent);
+    --tt-button-active-text-color-emphasized: #080f20;
+    --tt-button-active-icon-color-emphasized: #080f20;
+    --tt-button-active-icon-sub-color-emphasized: #080f20;
+    --tt-button-active-dropdown-arrows-color-emphasized: #080f20;
+    --tt-button-active-hover-bg-color-emphasized: var(--df-accent-hover);
+
+    /* Subdued active buttons */
+    --tt-button-active-bg-color-subdued: rgba(255, 138, 0, 0.08);
+    --tt-button-active-text-color-subdued: #ffb45c;
+    --tt-button-active-icon-color-subdued: var(--df-accent);
+    --tt-button-active-icon-sub-color-subdued: var(--df-accent);
+    --tt-button-active-dropdown-arrows-color-subdued: var(--df-accent);
+    --tt-button-active-hover-bg-color-subdued: rgba(255, 138, 0, 0.15);
+
+    /* Disabled buttons */
+    --tt-button-disabled-bg-color: transparent;
+    --tt-button-disabled-text-color: #475569;
+    --tt-button-disabled-icon-color: #475569;
+
+    /* Outline buttons */
+    --tt-button-outline-border-color: var(--df-border);
+    --tt-button-outline-hover-border-color: #334155;
+    --tt-button-outline-active-border-color: rgba(255, 138, 0, 0.5);
+    --tt-button-outline-active-border-color-emphasized: var(--df-accent);
+    --tt-button-outline-disabled-border-color: #1e293b;
+
+    /* Check buttons */
+    --tt-button-check-border-color: #334155;
+    --tt-button-check-bg-color: var(--df-bg);
+    --tt-button-check-hover-border-color: var(--df-accent);
+    --tt-button-check-hover-bg-color: rgba(255, 138, 0, 0.08);
+    --tt-button-check-checked-border-color: var(--df-accent);
+    --tt-button-check-checked-bg-color: var(--df-accent);
+    --tt-button-check-checked-icon-color: #080f20;
+    --tt-button-check-checked-text-color: var(--df-text);
+    --tt-button-check-focus-ring-color: rgba(255, 138, 0, 0.25);
+
+    /* Focus */
+    --tt-brand-color-500: var(--df-accent);
+}
+
+/* Toolbar */
+.simple-editor-wrapper .tiptap-toolbar {
+    background: var(--df-surface);
+    border-color: var(--df-border);
+}
+
+.simple-editor-wrapper .tiptap-separator {
+    background-color: var(--df-border);
+    opacity: 1;
+}
+
+/* Editor */
+.simple-editor-wrapper .simple-editor-content {
+    background: var(--df-bg);
+}
+
+.simple-editor-wrapper .tiptap.ProseMirror.simple-editor {
+    min-height: 280px;
+    padding: 22px 24px;
+    color: var(--df-text);
+    font-size: 15px;
+    line-height: 1.75;
+    caret-color: var(--df-accent);
+    outline: none;
+}
+
+.simple-editor-wrapper .simple-editor p {
+    color: var(--df-text);
+    margin-bottom: 14px;
+}
+
+.simple-editor-wrapper .simple-editor h1,
+.simple-editor-wrapper .simple-editor h2,
+.simple-editor-wrapper .simple-editor h3,
+.simple-editor-wrapper .simple-editor h4 {
+    color: #f8fafc;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+.simple-editor-wrapper .simple-editor h1 {
+    font-size: 2rem;
+    margin: 28px 0 16px;
+}
+
+.simple-editor-wrapper .simple-editor h2 {
+    font-size: 1.5rem;
+    margin: 24px 0 12px;
+}
+
+.simple-editor-wrapper .simple-editor h3 {
+    font-size: 1.2rem;
+    margin: 20px 0 10px;
+}
+
+.simple-editor-wrapper .simple-editor a {
+    color: var(--df-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.simple-editor-wrapper .simple-editor blockquote {
+    border-left: 3px solid var(--df-accent);
+    background: var(--df-elevated);
+    color: #cbd5e1;
+    border-radius: 0 6px 6px 0;
+    padding: 12px 18px;
+    margin: 20px 0;
+}
+
+.simple-editor-wrapper .simple-editor code {
+    background: var(--df-elevated);
+    color: #fdba74;
+    border: 1px solid #263650;
+    border-radius: 5px;
+    padding: 2px 5px;
+}
+
+.simple-editor-wrapper .simple-editor pre {
+    background: #050b18;
+    border: 1px solid var(--df-border);
+    border-radius: 8px;
+    padding: 18px;
+    overflow-x: auto;
+}
+
+.simple-editor-wrapper .simple-editor pre code {
+    background: transparent;
+    border: 0;
+    color: #e2e8f0;
+    padding: 0;
+}
+
+.simple-editor-wrapper .simple-editor hr {
+    border: 0;
+    border-top: 1px solid var(--df-border);
+    margin: 24px 0;
+}
+
+.simple-editor-wrapper .simple-editor img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.simple-editor-wrapper .simple-editor ::selection {
+    background: rgba(255, 138, 0, 0.3);
+}
+
+/* Responsive editor */
+@media (max-width: 640px) {
+    .simple-editor-wrapper .tiptap.ProseMirror.simple-editor {
+        min-height: 220px;
+        padding: 16px;
+    }
+}
