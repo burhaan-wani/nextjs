@@ -4,7 +4,7 @@ const AskAQuestion = () => {
     return (
         <section className="space-y-7">
             <h1 className="font-bold text-2xl">Ask a question</h1>
-            <AskQuestion />;
+            <AskQuestion />
         </section>
     );
 };
