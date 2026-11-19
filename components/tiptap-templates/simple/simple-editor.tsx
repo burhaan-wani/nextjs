@@ -209,7 +209,11 @@ const MobileToolbarContent = ({
     </>
 );
 
-export function SimpleEditor() {
+interface Props {
+    value: string;
+    onChange: (content: string) => void;
+}
+export function SimpleEditor({ value, onChange }: Props) {
     const isMobile = useIsBreakpoint();
     const { height } = useWindowSize();
     const [mobileView, setMobileView] = useState<
@@ -221,6 +225,9 @@ export function SimpleEditor() {
 
     const editor = useEditor({
         immediatelyRender: false,
+        onUpdate: ({ editor }) => {
+            onChange(editor.getHTML());
+        },
         editorProps: {
             attributes: {
                 autocomplete: "off",
@@ -260,7 +267,7 @@ export function SimpleEditor() {
                 onError: (error) => console.error("Upload failed:", error),
             }),
         ],
-        content: "",
+        content: value,
     });
 
     const rect = useCursorVisibility({

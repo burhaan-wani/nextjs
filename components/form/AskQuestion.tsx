@@ -92,6 +92,7 @@ const AskQuestion = () => {
         // TODO: Connect your create-question server action/API here.
     };
 
+    console.log();
     return (
         <form
             onSubmit={handleSubmit(handleFormSubmit)}
@@ -170,7 +171,10 @@ const AskQuestion = () => {
                                     you've put in the title.
                                 </p>
 
-                                <SimpleEditor />
+                                <SimpleEditor
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                />
                                 {/* </div> */}
                                 {fieldState.invalid && (
                                     <FieldError
