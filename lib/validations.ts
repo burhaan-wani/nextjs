@@ -35,3 +35,21 @@ export const askAQuestionSchema = z.object({
         .min(1, { message: "Tags must contain atleast 1 tag" })
         .max(5, { message: "There can only be 5 tags" }),
 });
+
+export const userSchema = z.object({
+    name: z.string().min(1, { message: "Name is required" }),
+    username: z
+        .string()
+        .min(3, { message: "Username must be at least 3 characters long." }),
+    email: z
+        .string()
+        .email({ message: "Please provide a valid email address." }),
+    bio: z.string().optional(),
+    image: z.string().url({ message: "Please provide a valid URL" }).optional(),
+    location: z.string().optional(),
+    protfolio: z
+        .string()
+        .url({ message: "Please provide a valid URL" })
+        .optional(),
+    reputation: z.number().optional(),
+});

@@ -14,7 +14,7 @@ const formatResponse = (
         success: false,
         error: {
             message,
-            details: errors,
+            details: errors ?? {},
         },
     };
 
