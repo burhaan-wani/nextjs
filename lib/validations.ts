@@ -16,7 +16,7 @@ export const registerSchema = z.object({
         .string()
         .min(1, { message: "Username must contain atleast 1 character" }),
     email: z.string({ message: "Email is required" }),
-    password: z.string(),
+    password: z.string().min(5),
 });
 
 export const askAQuestionSchema = z.object({
@@ -52,4 +52,13 @@ export const userSchema = z.object({
         .url({ message: "Please provide a valid URL" })
         .optional(),
     reputation: z.number().optional(),
+});
+
+export const accountSchema = z.object({
+    userId: z.string(),
+    name: z.string(),
+    password: z.string().min(5).optional(),
+    image: z.string().url({ message: "Please provide a valid URL" }).optional(),
+    provider: z.string(),
+    providerAccountId: z.string(),
 });
