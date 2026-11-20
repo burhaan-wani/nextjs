@@ -6,7 +6,7 @@ import { userSchema } from "@/lib/validations";
 import { APIErrorResponse } from "@/types/global";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
     try {
         const { email } = await request.json();
         if (!email) {
