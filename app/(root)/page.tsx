@@ -5,7 +5,7 @@ import { Button } from "@base-ui/react";
 import Link from "next/link";
 import QuestionCard from "@/components/cards/QuestionCard";
 import { DUMMY_QUESTIONS } from "@/constants";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 
 export const instant = false;
 
@@ -26,6 +26,14 @@ const Home = async ({ searchParams }: HomeProps) => {
         <section className="">
             <div className="flex justify-between items-center">
                 <h1 className="font-bold text-2xl">All Questions</h1>
+                <form
+                    action={async () => {
+                        "use server";
+                        await signOut({ redirectTo: ROUTES.SIGN_IN });
+                    }}
+                >
+                    <button>Logout</button>
+                </form>
                 <Button className="bg-linear-to-r from-orange-500 to-amber-500 px-4 py-2.5 rounded-md font-medium text-white shadow-sm hover:opacity-95 transition-opacity">
                     <Link href={ROUTES.ASK_QUESTION}>Ask a question</Link>
                 </Button>

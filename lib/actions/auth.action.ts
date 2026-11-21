@@ -6,36 +6,30 @@ import mongoose from "mongoose";
 import { signIn } from "@/auth";
 import Account from "@/database/account.model";
 import User from "@/database/user.model";
-import { action } from "../handlers/action";
+
 import handleError from "../handlers/error";
-import { loginSchema, registerSchema } from "../validations";
-import { ActionResponse, AuthCredentials, ErrorResponse } from "@/types/global";
 import { NotFoundError } from "../http-errors";
+import { ActionResponse, AuthCredentials, ErrorResponse } from "@/types/global";
+import { action } from "../handlers/action";
+import { loginSchema, registerSchema } from "../validations";
 
 export async function signUpWithCredentials(
     params: AuthCredentials,
 ): Promise<ActionResponse> {
-    const validatedData = await action({
-        params,
-        schema: registerSchema,
-    });
+    const validationResult = await action({ params, schema: registerSchema });
 
-    if (validatedData instanceof Error) {
-        return handleError(validatedData) as ErrorResponse;
+    if (validationResult instanceof Error) {
+        return handleError(validationResult) as ErrorResponse;
     }
 
-    const { name, username, email, password } = validatedData.params;
-    const normalizedEmail = email.toLowerCase().trim();
+    const { name, username, email, password } = validationResult.params!;
 
-    let session: mongoose.ClientSession | null = null;
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
     try {
-        session = await mongoose.startSession();
-        session.startTransaction();
+        const existingUser = await User.findOne({ email }).session(session);
 
-        const existingUser = await User.findOne({
-            email: normalizedEmail,
-        }).session(session);
         if (existingUser) {
             throw new Error("User already exists");
         }
@@ -43,100 +37,77 @@ export async function signUpWithCredentials(
         const existingUsername = await User.findOne({ username }).session(
             session,
         );
+
         if (existingUsername) {
             throw new Error("Username already exists");
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
 
-        const [newUser] = await User.create(
-            [
-                {
-                    name,
-                    username,
-                    email: normalizedEmail,
-                },
-            ],
-            { session },
-        );
+        const [newUser] = await User.create([{ username, name, email }], {
+            session,
+        });
 
         await Account.create(
             [
                 {
                     userId: newUser._id,
                     name,
-                    username,
-                    email: normalizedEmail,
-                    password: hashedPassword,
+                    email,
                     provider: "credentials",
-                    providerAccountId: normalizedEmail,
+                    providerAccountId: email,
+                    password: hashedPassword,
                 },
             ],
             { session },
         );
 
         await session.commitTransaction();
+
+        await signIn("credentials", { email, password, redirect: false });
+
+        return { success: true };
     } catch (error) {
-        if (session?.inTransaction()) {
-            await session.abortTransaction();
-        }
+        await session.abortTransaction();
+
         return handleError(error) as ErrorResponse;
     } finally {
-        if (session) {
-            await session.endSession();
-        }
+        await session.endSession();
     }
-
-    // Transaction is already committed and closed at this point
-    try {
-        signIn("credentials", {
-            email: normalizedEmail,
-            password,
-            redirect: false,
-        });
-    } catch (error) {
-        return handleError(error) as ErrorResponse;
-    }
-
-    return { success: true };
 }
 
 export async function signInWithCredentials(
     params: Pick<AuthCredentials, "email" | "password">,
 ): Promise<ActionResponse> {
-    const validatedData = await action({
-        params,
-        schema: loginSchema,
-    });
+    const validationResult = await action({ params, schema: loginSchema });
 
-    if (validatedData instanceof Error) {
-        return handleError(validatedData) as ErrorResponse;
+    if (validationResult instanceof Error) {
+        return handleError(validationResult) as ErrorResponse;
     }
 
-    const { email, password } = validatedData.params;
+    const { email, password } = validationResult.params!;
 
     try {
-        const existingUser = await User.findOne({
-            email,
-        });
-        if (!existingUser) {
-            throw new NotFoundError("User");
-        }
+        const existingUser = await User.findOne({ email });
+
+        if (!existingUser) throw new NotFoundError("User");
 
         const existingAccount = await Account.findOne({
             provider: "credentials",
             providerAccountId: email,
         });
-        if (!existingAccount) {
-            throw new NotFoundError("Account");
-        }
+
+        if (!existingAccount) throw new NotFoundError("Account");
+
         const passwordMatch = await bcrypt.compare(
             password,
             existingAccount.password,
         );
-        if (!passwordMatch) throw new Error("Passwords do not match");
 
-        signIn("credentials", { email, password, redirect: false });
+        if (!passwordMatch) throw new Error("Password does not match");
+
+        await signIn("credentials", { email, password, redirect: false });
+
         return { success: true };
     } catch (error) {
         return handleError(error) as ErrorResponse;
