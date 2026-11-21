@@ -12,7 +12,7 @@ export const registerSchema = z.object({
     name: z
         .string()
         .min(1, { message: "Name must contain atleast 1 character" }),
-    userName: z
+    username: z
         .string()
         .min(1, { message: "Username must contain atleast 1 character" }),
     email: z.string({ message: "Email is required" }),

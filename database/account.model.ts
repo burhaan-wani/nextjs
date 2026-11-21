@@ -27,6 +27,6 @@ const accountSchema = new Schema<IAccount>(
 );
 
 const Account =
-    models?.account || mongoose.model<IAccount>("Account", accountSchema);
+    models?.Account || mongoose.model<IAccount>("Account", accountSchema);
 
 export default Account;

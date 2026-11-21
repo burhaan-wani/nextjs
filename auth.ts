@@ -1,12 +1,54 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
 import { api } from "./lib/handlers/api";
 import { ActionResponse } from "./types/global";
 import { IAccount } from "./database/account.model";
+import { registerSchema } from "./lib/validations";
+import { IUser } from "./database/user.model";
+import bcrypt from "bcryptjs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-    providers: [GitHub, Google],
+    providers: [
+        GitHub,
+        Google,
+        Credentials({
+            async authorize(credentials) {
+                console.log("Credentials: ", credentials);
+                const validatedData = registerSchema.safeParse(credentials);
+                if (validatedData.success) {
+                    const { email, password } = validatedData.data;
+                    const { data: existingAccount } =
+                        (await api.accounts.getByProvider(
+                            email,
+                        )) as ActionResponse<IAccount>;
+                    if (!existingAccount) return null;
+
+                    const { data: existingUser } = (await api.users.getById(
+                        existingAccount.userId.toString(),
+                    )) as ActionResponse<IUser>;
+
+                    if (!existingUser) return null;
+
+                    const isValidPassword = await bcrypt.compare(
+                        password,
+                        existingAccount.password!,
+                    );
+                    if (isValidPassword) {
+                        return {
+                            id: existingUser._id.toString(),
+                            name: existingUser.name,
+                            email: existingUser.email,
+                            image: existingUser.image,
+                        };
+                    }
+                    return null;
+                }
+                return null;
+            },
+        }),
+    ],
     callbacks: {
         async session({ session, token }) {
             session.user.id = token.sub as string;

@@ -20,7 +20,7 @@ const Home = async ({ searchParams }: HomeProps) => {
         q.title.toLowerCase().includes(query.toLowerCase()),
     );
     const session = await auth();
-
+    console.log("Session: ", session);
     return (
         <section className="">
             <div className="flex justify-between items-center">

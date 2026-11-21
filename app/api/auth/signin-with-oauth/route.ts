@@ -80,7 +80,7 @@ export async function POST(request: Request) {
         }
 
         await session.commitTransaction();
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true }, { status: 201 });
     } catch (error) {
         await session.abortTransaction();
         return handleError(error, "api") as APIErrorResponse;
