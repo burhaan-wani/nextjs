@@ -5,6 +5,7 @@ import { Button } from "@base-ui/react";
 import Link from "next/link";
 import QuestionCard from "@/components/cards/QuestionCard";
 import { DUMMY_QUESTIONS } from "@/constants";
+import { auth } from "@/auth";
 
 export const instant = false;
 
@@ -18,6 +19,7 @@ const Home = async ({ searchParams }: HomeProps) => {
     const filteredQuestions = DUMMY_QUESTIONS.filter((q) =>
         q.title.toLowerCase().includes(query.toLowerCase()),
     );
+    const session = await auth();
 
     return (
         <section className="">

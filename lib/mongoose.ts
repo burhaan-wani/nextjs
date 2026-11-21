@@ -1,8 +1,8 @@
 import mongoose, { Mongoose } from "mongoose";
 
-const MONGO_URI = process.env.MONGO_URI as string;
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
-if (!MONGO_URI) {
+if (!MONGODB_URI) {
     throw new Error("Please define the MONGO_URI environment variable");
 }
 
@@ -28,7 +28,7 @@ const connectDB = async (): Promise<Mongoose> => {
 
     if (!cached.promise) {
         cached.promise = mongoose
-            .connect(MONGO_URI, {
+            .connect(MONGODB_URI, {
                 dbName: "dev-flow-db",
                 bufferCommands: false,
             })
