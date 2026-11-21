@@ -1,13 +1,14 @@
+import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
-import Credentials from "next-auth/providers/credentials";
-import { api } from "./lib/handlers/api";
-import { ActionResponse } from "./types/global";
+
 import { IAccount } from "./database/account.model";
-import { registerSchema } from "./lib/validations";
 import { IUser } from "./database/user.model";
-import bcrypt from "bcryptjs";
+import { api } from "./lib/handlers/api";
+import { loginSchema } from "./lib/validations";
+import { ActionResponse } from "./types/global";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     providers: [
@@ -15,72 +16,92 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         Google,
         Credentials({
             async authorize(credentials) {
-                console.log("Credentials: ", credentials);
-                const validatedData = registerSchema.safeParse(credentials);
-                if (validatedData.success) {
-                    const { email, password } = validatedData.data;
-                    const { data: existingAccount } =
-                        (await api.accounts.getByProvider(
-                            email,
-                        )) as ActionResponse<IAccount>;
-                    if (!existingAccount) return null;
+                const validatedData = loginSchema.safeParse(credentials);
+                if (!validatedData.success) return null;
 
-                    const { data: existingUser } = (await api.users.getById(
-                        existingAccount.userId.toString(),
-                    )) as ActionResponse<IUser>;
+                const email = validatedData.data.email.toLowerCase().trim();
+                const { password } = validatedData.data;
 
-                    if (!existingUser) return null;
+                const { data: existingAccount } =
+                    (await api.accounts.getByProvider(
+                        email,
+                    )) as ActionResponse<IAccount>;
+                if (!existingAccount || !existingAccount.password) return null;
 
-                    const isValidPassword = await bcrypt.compare(
-                        password,
-                        existingAccount.password!,
-                    );
-                    if (isValidPassword) {
-                        return {
-                            id: existingUser._id.toString(),
-                            name: existingUser.name,
-                            email: existingUser.email,
-                            image: existingUser.image,
-                        };
-                    }
-                    return null;
-                }
-                return null;
+                const { data: existingUser } = (await api.users.getById(
+                    existingAccount.userId.toString(),
+                )) as ActionResponse<IUser>;
+                if (!existingUser) return null;
+
+                const isValidPassword = await bcrypt.compare(
+                    password,
+                    existingAccount.password,
+                );
+                if (!isValidPassword) return null;
+
+                return {
+                    id: existingUser._id.toString(),
+                    name: existingUser.name,
+                    email: existingUser.email,
+                    image: existingUser.image,
+                };
             },
         }),
     ],
     callbacks: {
         async session({ session, token }) {
-            session.user.id = token.sub as string;
+            if (token.sub) {
+                session.user.id = token.sub;
+            }
             return session;
         },
-        async jwt({ account, token }) {
+        async jwt({ token, user, account }) {
+            if (user) {
+                token.email = user.email;
+            }
+
             if (account) {
+                const lookupKey =
+                    account.type === "credentials"
+                        ? (user?.email || token.email || "")
+                              .toLowerCase()
+                              .trim()
+                        : account.providerAccountId;
+
+                if (!lookupKey) return token;
+
                 const { data: existingAccount, success } =
                     (await api.accounts.getByProvider(
-                        account.type === "credentials"
-                            ? token.email!
-                            : account.providerAccountId,
+                        lookupKey,
                     )) as ActionResponse<IAccount>;
-                if (!success || !existingAccount) return token;
 
-                const userId = existingAccount.userId.toString();
-                if (userId) token.sub = userId;
+                if (success && existingAccount?.userId) {
+                    token.sub = existingAccount.userId.toString();
+                }
             }
+
             return token;
         },
         async signIn({ user, account, profile }) {
             if (account?.type === "credentials") return true;
-            if (!account || !user) return false;
+            if (!account || !user?.email) return false;
+
+            const baseUsername =
+                account.provider === "github"
+                    ? (profile?.login as string)
+                    : user.name?.toLowerCase().replace(/[^a-z0-9_]/g, "") ||
+                      user.email.split("@")[0].replace(/[^a-z0-9_]/g, "");
+
+            const username =
+                baseUsername && baseUsername.length >= 3
+                    ? baseUsername
+                    : `${baseUsername || "user"}_${account.providerAccountId.slice(-4)}`;
 
             const userInfo = {
-                name: user.name!,
-                email: user.email!,
-                image: user.image!,
-                username:
-                    account.provider === "github"
-                        ? (profile?.login as string)
-                        : (user.name?.toLowerCase() as string),
+                name: user.name || user.email.split("@")[0],
+                email: user.email.toLowerCase().trim(),
+                image: user.image ?? "",
+                username,
             };
 
             const { success } = (await api.auth.oAuthSignIn({
@@ -89,8 +110,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 providerAccountId: account.providerAccountId,
             })) as ActionResponse;
 
-            if (!success) return false;
-            return true;
+            return Boolean(success);
         },
     },
 });

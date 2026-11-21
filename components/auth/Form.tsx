@@ -55,7 +55,6 @@ const AuthForm = <T extends FieldValues>({
             );
             router.push(ROUTES.HOME);
         } else {
-            console.log(result.error);
             toast(result.error?.message);
         }
     };
