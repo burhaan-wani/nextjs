@@ -20,20 +20,11 @@ const Home = async ({ searchParams }: HomeProps) => {
         q.title.toLowerCase().includes(query.toLowerCase()),
     );
     const session = await auth();
-    console.log("New Session: ", session);
-    console.log(session);
+
     return (
         <section className="">
             <div className="flex justify-between items-center">
                 <h1 className="font-bold text-2xl">All Questions</h1>
-                <form
-                    action={async () => {
-                        "use server";
-                        await signOut({ redirectTo: ROUTES.SIGN_IN });
-                    }}
-                >
-                    <button>Logout</button>
-                </form>
                 <Button className="bg-linear-to-r from-orange-500 to-amber-500 px-4 py-2.5 rounded-md font-medium text-white shadow-sm hover:opacity-95 transition-opacity">
                     <Link href={ROUTES.ASK_QUESTION}>Ask a question</Link>
                 </Button>
