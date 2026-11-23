@@ -11,10 +11,11 @@ import { askAQuestionSchema } from "@/lib/validations";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { SimpleEditor } from "../tiptap-templates/simple/simple-editor";
-import { createQuestion } from "@/lib/actions/question.action";
+import { createQuestion, editQuestion } from "@/lib/actions/question.action";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
+import { TQuestion } from "@/types/global";
 
 const MAX_TAGS = 5;
 interface AskQuestionData {
@@ -23,16 +24,20 @@ interface AskQuestionData {
     tags: string[];
 }
 
-const AskQuestion = () => {
+interface AskQuestion {
+    question?: TQuestion;
+    isEdit?: boolean;
+}
+const AskQuestion = ({ question, isEdit }: AskQuestion) => {
     const router = useRouter();
     const [tagInput, setTagInput] = useState("");
 
     const form = useForm({
         resolver: zodResolver(askAQuestionSchema),
         defaultValues: {
-            title: "",
-            content: "",
-            tags: [],
+            title: question?.title ?? "",
+            content: question?.content ?? "",
+            tags: question?.tags.map((t) => t.name) ?? [],
         },
     });
 
@@ -96,6 +101,19 @@ const AskQuestion = () => {
     const handleFormSubmit = async (
         data: z.infer<typeof askAQuestionSchema>,
     ) => {
+        if (isEdit && question) {
+            const result = await editQuestion({
+                ...(data as AskQuestionData),
+                questionId: question._id.toString(),
+            });
+            if (result.data) {
+                toast.success("Question updated successfully");
+            } else {
+                toast.error(result.error?.message || "Question edit failed");
+            }
+            router.push(`/question/${result.data?._id}`);
+            return;
+        }
         const result = await createQuestion(data as AskQuestionData);
         if (result.success) {
             toast.success("Question created successfully");
@@ -301,7 +319,13 @@ const AskQuestion = () => {
                     disabled={isSubmitting}
                     className="h-11 rounded-lg bg-[#FF8A00] px-6 font-semibold text-white transition-colors hover:bg-[#F07800] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {isSubmitting ? "Submitting..." : "Ask a Question"}
+                    {isSubmitting
+                        ? isEdit
+                            ? "Updating..."
+                            : "Submitting..."
+                        : isEdit
+                          ? "Edit Question"
+                          : "Ask a Question"}
                 </Button>
             </div>
         </form>

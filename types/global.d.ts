@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { NextResponse } from "next/server";
 
 interface RouteParams {
@@ -11,21 +12,22 @@ interface Author {
 }
 
 interface Tag {
-    _id: string;
+    _id: Types.ObjectId;
     name: string;
+    questions: number;
 }
-
-export interface Question {
-    _id: string;
+type TQuestion = {
+    _id: Types.ObjectId;
     title: string;
-    description: string;
-    author: Author;
+    content: string;
     tags: Tag[];
+    author: Types.ObjectId;
+    createdAt: Date;
     upvotes: number;
+    downvotes: number;
     answers: number;
     views: number;
-    createdAt: Date;
-}
+};
 
 type ActionResponse<T = null> = {
     success: boolean;
@@ -66,3 +68,7 @@ type CreateQuestion = {
     content: string;
     tags: string[];
 };
+
+interface EditQuestion extends CreateQuestion {
+    questionId: string;
+}
