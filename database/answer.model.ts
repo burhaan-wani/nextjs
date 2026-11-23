@@ -25,6 +25,6 @@ const answerSchema = new Schema<IAnswer>(
 );
 
 const Answer =
-    models?.answer || mongoose.model<IAnswer>("Answer", answerSchema);
+    models?.Answer || mongoose.model<IAnswer>("Answer", answerSchema);
 
 export default Answer;

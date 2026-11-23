@@ -19,7 +19,7 @@ const tagQuestionSchema = new Schema<ITagQuestion>(
 );
 
 const TagQuestion =
-    models?.tagQuestion ||
+    models?.TagQuestion ||
     mongoose.model<ITagQuestion>("TagQuestion", tagQuestionSchema);
 
 export default TagQuestion;

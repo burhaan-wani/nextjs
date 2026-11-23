@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+interface RouteParams {
+    params: Promise<Record<string, string>>;
+    searchParams: Promise<Record<string, string>>;
+}
 interface Author {
     _id: string;
     name: string;
@@ -55,4 +59,10 @@ type AuthCredentials = {
     username: string;
     email: string;
     password: string;
+};
+
+type CreateQuestion = {
+    title: string;
+    content: string;
+    tags: string[];
 };

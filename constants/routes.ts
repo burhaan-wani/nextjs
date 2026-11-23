@@ -6,6 +6,7 @@ const ROUTES = {
     PROFILE: (_id: string) => `/profile/${_id}`,
     QUESTION: (_id: string) => `/question/${_id}`,
     TAGS: (_id: string) => `/tags/${_id}`,
+    QUESTION_DETAILS: (_id: string) => `/question/${_id}`,
 } as const;
 
 export default ROUTES;

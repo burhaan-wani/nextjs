@@ -22,6 +22,6 @@ const voteSchema = new Schema<IVote>(
     { timestamps: true },
 );
 
-const Vote = models?.vote || mongoose.model<IVote>("Vote", voteSchema);
+const Vote = models?.Vote || mongoose.model<IVote>("Vote", voteSchema);
 
 export default Vote;

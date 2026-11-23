@@ -1,4 +1,4 @@
-import mongoose, { models, Schema, Types } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
 export interface ITag {
     _id: Types.ObjectId;
@@ -14,6 +14,6 @@ const tagSchema = new Schema<ITag>(
     { timestamps: true },
 );
 
-const Tag = models?.tag || mongoose.model<ITag>("Tag", tagSchema);
+const Tag = mongoose.models?.Tag || mongoose.model<ITag>("Tag", tagSchema);
 
 export default Tag;

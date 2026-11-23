@@ -19,7 +19,7 @@ const collectionSchema = new Schema<ICollection>(
 );
 
 const Collection =
-    models?.collection ||
+    models?.Collection ||
     mongoose.model<ICollection>("Collection", collectionSchema);
 
 export default Collection;

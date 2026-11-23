@@ -9,20 +9,29 @@ import { z } from "zod";
 import { askAQuestionSchema } from "@/lib/validations";
 
 import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { SimpleEditor } from "../tiptap-templates/simple/simple-editor";
+import { createQuestion } from "@/lib/actions/question.action";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import ROUTES from "@/constants/routes";
 
 const MAX_TAGS = 5;
+interface AskQuestionData {
+    title: string;
+    content: string;
+    tags: string[];
+}
 
 const AskQuestion = () => {
+    const router = useRouter();
     const [tagInput, setTagInput] = useState("");
 
     const form = useForm({
         resolver: zodResolver(askAQuestionSchema),
         defaultValues: {
             title: "",
-            description: "",
+            content: "",
             tags: [],
         },
     });
@@ -87,12 +96,18 @@ const AskQuestion = () => {
     const handleFormSubmit = async (
         data: z.infer<typeof askAQuestionSchema>,
     ) => {
-        console.log("Question submitted:", data);
-
-        // TODO: Connect your create-question server action/API here.
+        const result = await createQuestion(data as AskQuestionData);
+        if (result.success) {
+            toast.success("Question created successfully");
+            if (result.data)
+                router.push(
+                    ROUTES.QUESTION_DETAILS(result.data._id.toString()),
+                );
+        } else {
+            toast.error(result.error?.message);
+        }
     };
 
-    console.log();
     return (
         <form
             onSubmit={handleSubmit(handleFormSubmit)}
@@ -148,7 +163,7 @@ const AskQuestion = () => {
 
                 {/* Question Description */}
                 <Controller
-                    name="description"
+                    name="content"
                     control={control}
                     render={({ field, fieldState }) => {
                         const inputId = "question-description";

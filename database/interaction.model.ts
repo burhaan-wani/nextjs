@@ -23,7 +23,7 @@ const interactionSchema = new Schema<IInteraction>(
 );
 
 const Interaction =
-    models?.interaction ||
+    models?.Interaction ||
     mongoose.model<IInteraction>("Interaction", interactionSchema);
 
 export default Interaction;

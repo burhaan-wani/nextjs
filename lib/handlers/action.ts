@@ -1,4 +1,5 @@
 "use server";
+
 import { ZodError } from "zod";
 import { ZodSchema } from "zod/v3";
 import { UnauthorizedError, ValidationError } from "../http-errors";
@@ -36,7 +37,6 @@ export async function action<T>({
         if (!session) {
             return new UnauthorizedError();
         }
-        oo;
     }
     await connectDB();
 
