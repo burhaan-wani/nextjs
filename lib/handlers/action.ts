@@ -9,28 +9,30 @@ import connectDB from "../mongoose";
 
 type ActionOptions<T> = {
     params: T;
-    schema: ZodSchema<T>;
+    schema?: ZodSchema<T>;
     authorize?: boolean;
 };
 
 export async function action<T>({
     params,
     schema,
-    authorize,
+    authorize = false,
 }: ActionOptions<T>) {
-    if (schema && params) {
+    let parsedParams = params;
+
+    if (schema) {
         try {
-            schema.parse(params);
+            parsedParams = schema.parse(params);
         } catch (error) {
             if (error instanceof ZodError) {
                 return new ValidationError(
                     error.flatten().fieldErrors as Record<string, string[]>,
                 );
-            } else {
-                return new Error("Schema validation failed");
             }
+            return new Error("Schema validation failed");
         }
     }
+
     let session: Session | null = null;
     if (authorize) {
         session = await auth();
@@ -38,7 +40,8 @@ export async function action<T>({
             return new UnauthorizedError();
         }
     }
+
     await connectDB();
 
-    return { params, session };
+    return { params: parsedParams, session };
 }

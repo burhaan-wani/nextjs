@@ -1,9 +1,10 @@
 import mongoose, { Mongoose } from "mongoose";
+import "@/database";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-    throw new Error("Please define the MONGO_URI environment variable");
+    throw new Error("Please define the MONGODB_URI environment variable");
 }
 
 interface MongooseCache {
@@ -15,10 +16,13 @@ declare global {
     var mongooseCache: MongooseCache | undefined;
 }
 
-let cached = global.mongooseCache;
+const cached: MongooseCache = global.mongooseCache ?? {
+    conn: null,
+    promise: null,
+};
 
-if (!cached) {
-    cached = global.mongooseCache = { conn: null, promise: null };
+if (!global.mongooseCache) {
+    global.mongooseCache = cached;
 }
 
 const connectDB = async (): Promise<Mongoose> => {

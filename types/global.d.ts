@@ -16,12 +16,13 @@ interface Tag {
     name: string;
     questions: number;
 }
+
 type TQuestion = {
     _id: Types.ObjectId;
     title: string;
     content: string;
     tags: Tag[];
-    author: Types.ObjectId;
+    author: Author;
     createdAt: Date;
     upvotes: number;
     downvotes: number;
@@ -71,4 +72,12 @@ type CreateQuestion = {
 
 interface EditQuestion extends CreateQuestion {
     questionId: string;
+}
+
+interface PaginatedSearchParams {
+    page?: number;
+    pageSize?: number;
+    query?: string;
+    filter?: string;
+    sort?: string;
 }

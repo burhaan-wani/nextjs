@@ -100,3 +100,11 @@ export const editQuestionSchema = z.object({
 export const getQuestionSchema = z.object({
     questionId: z.string(),
 });
+
+export const PaginatedSearchParamsSchema = z.object({
+    page: z.number().positive().default(1),
+    pageSize: z.number().positive().default(10),
+    query: z.string().optional(),
+    filter: z.string().optional(),
+    sort: z.string().optional(),
+});

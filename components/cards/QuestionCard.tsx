@@ -1,19 +1,19 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Question } from "@/types/global";
+import { TQuestion } from "@/types/global";
 import MetricTimestamp from "./MetricTimestamp";
 import ROUTES from "@/constants/routes";
 import TagCard from "../TagCard";
 
 interface QuestionCardProps {
-    question: Question;
+    question: TQuestion;
 }
 
 const QuestionCard = ({ question }: QuestionCardProps) => {
     const {
         _id,
         title,
-        description,
+        content,
         author,
         tags,
         createdAt,
@@ -24,15 +24,14 @@ const QuestionCard = ({ question }: QuestionCardProps) => {
 
     return (
         <article className="rounded-xl border border-[#1E293B] bg-[#080F20] p-6 sm:p-7 transition-all duration-200 hover:border-[#334155]">
-            <Link href={ROUTES.QUESTION(_id)} className="group block">
+            <Link
+                href={ROUTES.QUESTION(_id.toString())}
+                className="group block"
+            >
                 <h3 className="line-clamp-2 text-[17px] font-semibold leading-6 text-[#F1F5F9] transition-colors group-hover:text-[#FF8A00]">
                     {title}
                 </h3>
             </Link>
-
-            <p className="mt-4 line-clamp-2 text-[15px] leading-normal text-[#94A3B8]">
-                {description}
-            </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
                 {tags.map((tag) => (
@@ -43,8 +42,8 @@ const QuestionCard = ({ question }: QuestionCardProps) => {
                     //     {tag.name}
                     // </span>
                     <TagCard
-                        key={tag._id}
-                        _id={tag._id}
+                        key={tag._id.toString()}
+                        _id={tag._id.toString()}
                         tagName={tag.name}
                         compact
                     />
@@ -59,13 +58,19 @@ const QuestionCard = ({ question }: QuestionCardProps) => {
                         href={ROUTES.PROFILE(author._id)}
                         className="flex gap-2 items-center text-sm"
                     >
-                        <Image
-                            src={author.image}
-                            alt={author.name}
-                            width={28}
-                            height={28}
-                            className="size-7 rounded-full object-cover"
-                        />
+                        {author.image ? (
+                            <Image
+                                src={author.image}
+                                alt={author.name}
+                                width={28}
+                                height={28}
+                                className="size-7 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="flex size-7 items-center justify-center rounded-full bg-[#1E293B] text-xs font-semibold text-[#F1F5F9]">
+                                {author.name?.[0]?.toUpperCase() ?? "?"}
+                            </div>
+                        )}
 
                         <span className="font-semibold text-[#F1F5F9]">
                             {author.name}

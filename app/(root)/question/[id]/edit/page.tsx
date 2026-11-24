@@ -18,7 +18,7 @@ const AskAQuestion = async ({ params }: RouteParams) => {
 
     const session = await auth();
     const userId = session?.user?.id;
-    if (!session) return redirect(`/question/${id}`);
+    if (!session) return redirect(ROUTES.HOME);
 
     if (question?.author.toString() !== userId)
         return redirect(`/question/${id}`);

@@ -1,25 +1,26 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { getTimestamp } from "@/lib/formatDate";
-import { useEffect, useState } from "react";
 
 interface MetricTimestampProps {
     createdAt: Date | string;
 }
 
+const emptySubscribe = () => () => {};
+
 const MetricTimestamp = ({ createdAt }: MetricTimestampProps) => {
-    // Prevents SSR hydration mismatch by rendering after mount on the client
-    const [isMounted, setIsMounted] = useState(false);
+    const isClient = useSyncExternalStore(
+        emptySubscribe,
+        () => true,
+        () => false,
+    );
 
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    if (!isMounted) {
-        return <span className="text-muted-foreground">loading...</span>;
+    if (!isClient) {
+        return <span className="text-[#64748B]">...</span>;
     }
 
-    return <span>asked {getTimestamp(createdAt)}</span>;
+    return <span>{getTimestamp(createdAt)}</span>;
 };
 
 export default MetricTimestamp;
