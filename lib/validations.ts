@@ -98,7 +98,7 @@ export const editQuestionSchema = z.object({
 });
 
 export const getQuestionSchema = z.object({
-    questionId: z.string(),
+    id: z.string(),
 });
 
 export const PaginatedSearchParamsSchema = z.object({

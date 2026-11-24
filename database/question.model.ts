@@ -11,6 +11,7 @@ export interface IQuestion {
     downvotes: number;
     answers: number;
     createdAt: Date;
+    updatedAt: Date;
 }
 
 const questionSchema = new Schema<IQuestion>(

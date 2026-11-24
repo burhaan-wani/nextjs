@@ -28,6 +28,7 @@ type TQuestion = {
     downvotes: number;
     answers: number;
     views: number;
+    updatedAt: Date;
 };
 
 type ActionResponse<T = null> = {

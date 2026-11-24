@@ -254,28 +254,36 @@ export async function editQuestion(
     }
 }
 
-export async function getQuestion(
-    params: mongoose.Types.ObjectId,
-): Promise<ActionResponse<TQuestion>> {
+export async function getQuestion(params: {
+    id: string;
+}): Promise<ActionResponse<TQuestion>> {
+    await connection();
     const validatedResult = await action({
-        params: { questionId: params.toString() },
+        params,
         schema: getQuestionSchema,
-        authorize: true,
     });
 
     if (validatedResult instanceof Error) {
+        console.error("getQuestion action failed:", validatedResult);
         return handleError(validatedResult) as ErrorResponse;
     }
 
     try {
-        const { questionId } = validatedResult.params;
-        const question = await Question.findById(questionId).populate("tags");
+        const { id: questionId } = validatedResult.params;
+
+        const question = await Question.findById(questionId)
+            .populate("tags", "name")
+            .populate("author", "_id name image")
+            .lean();
 
         if (!question) {
             throw new NotFoundError("Question");
         }
 
-        return { success: true, data: JSON.parse(JSON.stringify(question)) };
+        return {
+            success: true,
+            data: JSON.parse(JSON.stringify(question)),
+        };
     } catch (error) {
         return handleError(error) as ErrorResponse;
     }

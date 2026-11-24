@@ -1,18 +1,157 @@
 import { Suspense } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { redirect } from "next/navigation";
 import { RouteParams } from "@/types/global";
+import { getQuestion } from "@/lib/actions/question.action";
+import ROUTES from "@/constants/routes";
+import TagCard from "@/components/TagCard";
+import MarkdownContent from "@/components/questions/MarkdownContent";
+import QuestionActions from "@/components/questions/QuestionActions";
+import MetricTimestamp from "@/components/cards/MetricTimestamp";
 
-async function QuestionContent({ params }: { params: RouteParams["params"] }) {
-    const { id } = await params;
-
-    return <div>QuestionDetails {id}</div>;
+function QuestionDetailsFallback() {
+    return (
+        <div className="space-y-6 rounded-xl border border-[#1E293B] bg-[#080F20] p-6 sm:p-8">
+            <div className="h-7 w-2/3 rounded bg-[#111B30]" />
+            <div className="flex items-center justify-between border-y border-[#1E293B] py-4">
+                <div className="h-8 w-44 rounded bg-[#111B30]" />
+                <div className="flex gap-2">
+                    <div className="h-8 w-24 rounded-lg bg-[#111B30]" />
+                    <div className="h-8 w-24 rounded-lg bg-[#111B30]" />
+                    <div className="h-8 w-32 rounded-lg bg-[#111B30]" />
+                </div>
+            </div>
+            <div className="space-y-3">
+                <div className="h-4 w-full rounded bg-[#111B30]" />
+                <div className="h-4 w-5/6 rounded bg-[#111B30]" />
+                <div className="h-32 w-full rounded-xl bg-[#111B30]" />
+            </div>
+        </div>
+    );
 }
 
-const QuestionDetails = ({ params }: RouteParams) => {
+async function QuestionContent({ params }: RouteParams) {
+    const { id } = await params;
+    const { success, data } = await getQuestion({ id });
+
+    if (!success || !data) {
+        redirect("/404");
+    }
+
+    const question = data;
+    const authorInitial = question.author?.name?.[0]?.toUpperCase() ?? "?";
+
     return (
-        <section>
-            <h1>Question Details</h1>
-            <Suspense fallback={<div>Loading question...</div>}>
-                <QuestionContent params={params} />
+        <article className="rounded-xl border border-[#1E293B] bg-[#080F20] p-6 sm:p-8">
+            {/* Top Metadata & Stats */}
+            <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-[#94A3B8]">
+                <div className="flex flex-wrap items-center gap-3">
+                    <span>
+                        Asked <MetricTimestamp createdAt={question.createdAt} />
+                    </span>
+                    {question.updatedAt &&
+                        question.updatedAt !== question.createdAt && (
+                            <>
+                                <span className="text-[#475569]">•</span>
+                                <span>
+                                    Updated{" "}
+                                    <MetricTimestamp
+                                        createdAt={question.updatedAt}
+                                    />
+                                </span>
+                            </>
+                        )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    <span>
+                        <strong className="font-semibold text-[#F1F5F9]">
+                            {question.views ?? 0}
+                        </strong>{" "}
+                        Views
+                    </span>
+                    <span>
+                        <strong className="font-semibold text-[#F1F5F9]">
+                            {question.answers ?? 0}
+                        </strong>{" "}
+                        Answers
+                    </span>
+                </div>
+            </div>
+
+            {/* Title */}
+            <h1 className="mt-3 text-xl font-bold leading-snug text-[#F1F5F9] sm:text-2xl">
+                {question.title}
+            </h1>
+
+            {/* Author Details + Upvote / Downvote / Collection Actions */}
+            <div className="mt-5 flex flex-col justify-between gap-4 border-y border-[#1E293B] py-4 md:flex-row md:items-center">
+                <Link
+                    href={ROUTES.PROFILE(question.author._id.toString())}
+                    className="inline-flex items-center gap-3 text-sm"
+                >
+                    {question.author?.image ? (
+                        <Image
+                            src={question.author.image}
+                            alt={question.author.name}
+                            width={34}
+                            height={34}
+                            className="size-8 rounded-full object-cover"
+                        />
+                    ) : (
+                        <div className="flex size-8 items-center justify-center rounded-full bg-[#111B30] text-xs font-semibold text-[#FF8A00] ring-1 ring-[#1E293B]">
+                            {authorInitial}
+                        </div>
+                    )}
+
+                    <div>
+                        <p className="font-semibold text-[#F1F5F9] transition-colors hover:text-[#FF8A00]">
+                            {question.author?.name}
+                        </p>
+                        <p className="text-xs text-[#94A3B8]">Author</p>
+                    </div>
+                </Link>
+
+                <QuestionActions
+                    questionId={question._id.toString()}
+                    initialUpvotes={question.upvotes ?? 0}
+                    initialDownvotes={question.downvotes ?? 0}
+                />
+            </div>
+
+            {/* Body Content (Markdown + Syntax-Highlighted Code Blocks) */}
+            <div className="mt-6">
+                <MarkdownContent content={question.content} />
+            </div>
+
+            {/* Tags */}
+            {question.tags && question.tags.length > 0 && (
+                <div className="mt-8 flex flex-wrap gap-2 border-t border-[#1E293B] pt-5">
+                    {question.tags.map(
+                        (tag: {
+                            _id: string | { toString(): string };
+                            name: string;
+                        }) => (
+                            <TagCard
+                                key={tag._id.toString()}
+                                _id={tag._id.toString()}
+                                tagName={tag.name}
+                                compact
+                            />
+                        ),
+                    )}
+                </div>
+            )}
+        </article>
+    );
+}
+
+const QuestionDetails = ({ params, searchParams }: RouteParams) => {
+    return (
+        <section className="mx-auto w-full max-w-5xl px-4 py-2 sm:px-6">
+            <Suspense fallback={<QuestionDetailsFallback />}>
+                <QuestionContent params={params} searchParams={searchParams} />
             </Suspense>
         </section>
     );
