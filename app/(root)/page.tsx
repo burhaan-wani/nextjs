@@ -8,13 +8,9 @@ import { getQuestions } from "@/lib/actions/question.action";
 import { Suspense } from "react";
 import { RouteParams } from "@/types/global";
 
-export const instant = false;
-
-interface HomeProps {
-    searchParams: Promise<{ [key: string]: string }>;
-}
-
-async function QuestionList({ searchParams }: HomeProps) {
+async function QuestionList({
+    searchParams,
+}: Pick<RouteParams, "searchParams">) {
     const { query = "", filter = "", page, pageSize } = await searchParams;
 
     const result = await getQuestions({
@@ -28,7 +24,6 @@ async function QuestionList({ searchParams }: HomeProps) {
         return <p>Could not load questions.</p>;
     }
 
-    // Render cards...
     return questions && questions.length > 0 ? (
         questions.map((question) => (
             <QuestionCard key={question._id.toString()} question={question} />

@@ -5,7 +5,8 @@ const ROUTES = {
     ASK_QUESTION: "/ask-question",
     PROFILE: (_id: string) => `/profile/${_id}`,
     QUESTION: (_id: string) => `/question/${_id}`,
-    TAGS: (_id: string) => `/tags/${_id}`,
+    TAG: (_id: string) => `/tags/${_id}`,
+    TAGS: "/tags",
     QUESTION_DETAILS: (_id: string) => `/question/${_id}`,
 } as const;
 

@@ -18,7 +18,7 @@ const TagCard = ({
 }: TagCardProps) => {
     return (
         <Link
-            href={ROUTES.TAGS(_id)}
+            href={ROUTES.TAG(_id)}
             className="group flex items-center justify-between rounded-lg space-y-3"
         >
             <span className="inline-flex items-center rounded-md bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-400 group-hover:bg-orange-500/20">

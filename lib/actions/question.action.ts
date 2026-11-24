@@ -26,6 +26,7 @@ import {
     ValidationError,
 } from "../http-errors";
 import connectDB from "../mongoose";
+import { connection } from "next/server";
 
 export async function createQuestion(
     params: CreateQuestion,
@@ -283,11 +284,12 @@ export async function getQuestion(
 export async function getQuestions(
     params: PaginatedSearchParams,
 ): Promise<ActionResponse<{ questions: TQuestion[]; isNext: boolean }>> {
+    await connection();
     const validationResult = await action({
         params,
         schema: PaginatedSearchParamsSchema,
-        authorize: true,
     });
+
     if (validationResult instanceof Error) {
         return handleError(ValidationError) as ErrorResponse;
     }

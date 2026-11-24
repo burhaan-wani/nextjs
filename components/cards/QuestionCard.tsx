@@ -35,12 +35,6 @@ const QuestionCard = ({ question }: QuestionCardProps) => {
 
             <div className="mt-4 flex flex-wrap gap-2">
                 {tags.map((tag) => (
-                    // <span
-                    //     key={tag._id}
-                    //     className="rounded-md bg-[#111B30] px-3 py-1.5 text-xs font-semibold text-[#CBD5E1] transition-colors hover:bg-[#17243B]"
-                    // >
-                    //     {tag.name}
-                    // </span>
                     <TagCard
                         key={tag._id.toString()}
                         _id={tag._id.toString()}
