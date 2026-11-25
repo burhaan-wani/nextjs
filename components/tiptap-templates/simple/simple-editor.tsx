@@ -300,6 +300,16 @@ export function SimpleEditor({ value, onChange }: Props) {
         openSearchAndReplace();
     }, [closeSearchAndReplace, isSearchAndReplaceOpen, openSearchAndReplace]);
 
+    useEffect(() => {
+        if (!editor) return;
+
+        const currentHtml = editor.getHTML();
+        const isEmptyValue = !value || value === "<p></p>";
+
+        if (isEmptyValue && currentHtml !== "<p></p>") {
+            editor.commands.clearContent(true);
+        }
+    }, [value, editor]);
     return (
         <div className="simple-editor-wrapper">
             <EditorContext.Provider value={{ editor }}>

@@ -2,6 +2,7 @@
 
 import {
     ActionResponse,
+    AnswerQuestionProps,
     CreateQuestion,
     EditQuestion,
     ErrorResponse,
@@ -11,6 +12,7 @@ import {
 } from "@/types/global";
 import { action } from "../handlers/action";
 import {
+    answerAQuestionSchema,
     askAQuestionSchema,
     editQuestionSchema,
     getQuestionSchema,
@@ -27,8 +29,8 @@ import {
     UnauthorizedError,
     ValidationError,
 } from "../http-errors";
-import connectDB from "../mongoose";
 import { connection } from "next/server";
+import { Answer } from "@/database";
 
 export async function createQuestion(
     params: CreateQuestion,
@@ -266,7 +268,6 @@ export async function getQuestion(params: {
     });
 
     if (validatedResult instanceof Error) {
-        console.error("getQuestion action failed:", validatedResult);
         return handleError(validatedResult) as ErrorResponse;
     }
 
@@ -378,6 +379,43 @@ export async function incrementViews(
         question.views += 1;
         await question.save();
         return { success: true, data: { views: question.views } };
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
+    }
+}
+
+export async function answerAQuestion(
+    params: AnswerQuestionProps,
+): Promise<ActionResponse> {
+    const validationResult = await action({
+        params,
+        schema: answerAQuestionSchema,
+        authorize: true,
+    });
+
+    if (validationResult instanceof Error) {
+        return handleError(validationResult) as ErrorResponse;
+    }
+
+    const {
+        params: { content, questionId },
+    } = validationResult;
+    const userId = validationResult.session?.user?.id;
+
+    try {
+        const question = await Question.findById(questionId);
+        if (!question) throw new NotFoundError("Question");
+
+        question.answers += 1;
+        await question.save();
+
+        await Answer.create({
+            author: userId,
+            question: questionId,
+            content,
+        });
+
+        return { success: true };
     } catch (error) {
         return handleError(error) as ErrorResponse;
     }

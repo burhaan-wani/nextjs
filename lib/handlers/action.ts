@@ -37,7 +37,9 @@ export async function action<T>({
     if (authorize) {
         session = await auth();
         if (!session) {
-            return new UnauthorizedError();
+            return new UnauthorizedError(
+                "You are not logged in. Please Login first.",
+            );
         }
     }
 

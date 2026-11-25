@@ -10,6 +10,7 @@ import MarkdownContent from "@/components/questions/MarkdownContent";
 import QuestionActions from "@/components/questions/QuestionActions";
 import MetricTimestamp from "@/components/cards/MetricTimestamp";
 import { after } from "next/server";
+import AnswerForm from "@/components/answer/AnswerForm";
 
 function QuestionDetailsFallback() {
     return (
@@ -148,6 +149,10 @@ async function QuestionContent({ params }: RouteParams) {
                     )}
                 </div>
             )}
+
+            <section className="my-5">
+                <AnswerForm questionId={id} />
+            </section>
         </article>
     );
 }
