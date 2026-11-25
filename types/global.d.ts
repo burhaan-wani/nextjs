@@ -95,3 +95,15 @@ interface AnswerQuestionProps {
     questionId: string;
     content: string;
 }
+
+interface GetAnswerParams extends PaginatedSearchParams {
+    questionId: string;
+}
+
+interface IAnswer {
+    _id: Types.ObjectId;
+    author: Author;
+    content: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
