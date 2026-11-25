@@ -112,3 +112,7 @@ export const PaginatedSearchParamsSchema = z.object({
 export const tagQuestionSchema = PaginatedSearchParamsSchema.extend({
     tagId: z.string().min(1),
 });
+
+export const incrementViewsSchema = z.object({
+    questionId: z.string().min(1),
+});

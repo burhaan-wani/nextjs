@@ -3,12 +3,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { RouteParams } from "@/types/global";
-import { getQuestion } from "@/lib/actions/question.action";
+import { getQuestion, incrementViews } from "@/lib/actions/question.action";
 import ROUTES from "@/constants/routes";
 import TagCard from "@/components/TagCard";
 import MarkdownContent from "@/components/questions/MarkdownContent";
 import QuestionActions from "@/components/questions/QuestionActions";
 import MetricTimestamp from "@/components/cards/MetricTimestamp";
+import { after } from "next/server";
 
 function QuestionDetailsFallback() {
     return (
@@ -34,6 +35,10 @@ function QuestionDetailsFallback() {
 async function QuestionContent({ params }: RouteParams) {
     const { id } = await params;
     const { success, data } = await getQuestion({ id });
+
+    after(async () => {
+        await incrementViews({ questionId: id });
+    });
 
     if (!success || !data) {
         redirect("/404");
