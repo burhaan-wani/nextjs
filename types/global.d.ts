@@ -104,6 +104,8 @@ interface IAnswer {
     _id: Types.ObjectId;
     author: Author;
     content: string;
+    upvotes: number;
+    downvotes: number;
     createdAt: Date;
     updatedAt: Date;
 }

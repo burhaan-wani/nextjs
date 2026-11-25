@@ -3,7 +3,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { RouteParams } from "@/types/global";
-import { getQuestion, incrementViews } from "@/lib/actions/question.action";
+import {
+    getQuestion,
+    getQuestionsAllAnswers,
+    incrementViews,
+} from "@/lib/actions/question.action";
 import ROUTES from "@/constants/routes";
 import TagCard from "@/components/TagCard";
 import MarkdownContent from "@/components/questions/MarkdownContent";
@@ -11,6 +15,7 @@ import QuestionActions from "@/components/questions/QuestionActions";
 import MetricTimestamp from "@/components/cards/MetricTimestamp";
 import { after } from "next/server";
 import AnswerForm from "@/components/answer/AnswerForm";
+import AnswersSection from "@/components/answer/AnswerSection";
 
 function QuestionDetailsFallback() {
     return (
@@ -33,20 +38,40 @@ function QuestionDetailsFallback() {
     );
 }
 
-async function QuestionContent({ params }: RouteParams) {
+async function QuestionContent({ params, searchParams }: RouteParams) {
     const { id } = await params;
-    const { success, data } = await getQuestion({ id });
+    const resolvedSearchParams = await searchParams;
+    const filter =
+        typeof resolvedSearchParams?.filter === "string" &&
+        resolvedSearchParams.filter.trim() !== ""
+            ? resolvedSearchParams.filter
+            : "latest";
 
-    after(async () => {
-        await incrementViews({ questionId: id });
-    });
+    const { success, data } = await getQuestion({ id });
 
     if (!success || !data) {
         redirect("/404");
     }
 
+    after(async () => {
+        await incrementViews({ questionId: id });
+    });
+
+    const {
+        success: answerSuccess,
+        data: answersData,
+        error: answerError,
+    } = await getQuestionsAllAnswers({
+        questionId: id,
+        page: 1,
+        pageSize: 10,
+        filter,
+    });
+
     const question = data;
     const authorInitial = question.author?.name?.[0]?.toUpperCase() ?? "?";
+    const answers = answersData?.answers ?? [];
+    const totalAnswers = answersData?.totalAnswers ?? answers.length;
 
     return (
         <article className="rounded-xl border border-[#1E293B] bg-[#080F20] p-6 sm:p-8">
@@ -79,7 +104,7 @@ async function QuestionContent({ params }: RouteParams) {
                     </span>
                     <span>
                         <strong className="font-semibold text-[#F1F5F9]">
-                            {question.answers ?? 0}
+                            {question.answers ?? totalAnswers}
                         </strong>{" "}
                         Answers
                     </span>
@@ -150,7 +175,17 @@ async function QuestionContent({ params }: RouteParams) {
                 </div>
             )}
 
-            <section className="my-5">
+            {/* Answers List & Filter (Appears Before Answer Form) */}
+            <AnswersSection
+                answers={answers}
+                totalAnswers={totalAnswers}
+                currentFilter={filter}
+                hasError={!answerSuccess}
+                errorMessage={answerError?.message}
+            />
+
+            {/* Answer Submission Form */}
+            <section className="mt-8 border-t border-[#1E293B] pt-8">
                 <AnswerForm questionId={id} />
             </section>
         </article>
@@ -159,7 +194,7 @@ async function QuestionContent({ params }: RouteParams) {
 
 const QuestionDetails = ({ params, searchParams }: RouteParams) => {
     return (
-        <section className="mx-auto w-full max-w-5xl px-4 py-2 sm:px-6">
+        <section className="mx-auto w-full max-w-5xl px-4 py-2 sm:px-2">
             <Suspense fallback={<QuestionDetailsFallback />}>
                 <QuestionContent params={params} searchParams={searchParams} />
             </Suspense>

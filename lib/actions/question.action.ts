@@ -434,7 +434,7 @@ export async function getQuestionsAllAnswers(params: GetAnswerParams): Promise<
     const validationResult = await action({ params, schema: getAnswersSchema });
 
     if (validationResult instanceof Error) {
-        return handleError(ValidationError) as ErrorResponse;
+        return handleError(validationResult) as ErrorResponse;
     }
 
     const {
