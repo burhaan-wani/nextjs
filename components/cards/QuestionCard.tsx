@@ -1,37 +1,130 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { Star } from "lucide-react";
+import { toast } from "sonner";
+
 import { TQuestion } from "@/types/global";
 import MetricTimestamp from "./MetricTimestamp";
 import ROUTES from "@/constants/routes";
 import TagCard from "../TagCard";
+import {
+    addToCollections,
+    hasSavedQuestion,
+} from "@/lib/actions/collection.action";
 
 interface QuestionCardProps {
     question: TQuestion;
 }
 
 const QuestionCard = ({ question }: QuestionCardProps) => {
-    const {
-        _id,
-        title,
-        content,
-        author,
-        tags,
-        createdAt,
-        views,
-        answers,
-        upvotes,
-    } = question;
+    const { _id, title, author, tags, createdAt, views, answers, upvotes } =
+        question;
+
+    const { data: sessionData, status } = useSession();
+    const userId = sessionData?.user?.id;
+    const isAuthenticated = status === "authenticated" && Boolean(userId);
+
+    const [isSaved, setIsSaved] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const questionId = _id.toString();
+
+    useEffect(() => {
+        if (!isAuthenticated || !userId) {
+            setIsSaved(false);
+            return;
+        }
+
+        let cancelled = false;
+
+        const loadSavedStatus = async () => {
+            try {
+                const res = await hasSavedQuestion({ id: questionId });
+
+                if (!cancelled) {
+                    setIsSaved(Boolean(res?.success && res.data?.saved));
+                }
+            } catch {
+                if (!cancelled) {
+                    setIsSaved(false);
+                }
+            }
+        };
+
+        loadSavedStatus();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [questionId, isAuthenticated, userId]);
+
+    const handleAddToCollection = async () => {
+        if (!isAuthenticated) {
+            toast.error("Only logged in user can save to collection.");
+            return;
+        }
+        if (loading) return;
+
+        setLoading(true);
+        try {
+            const { success, data, error } = await addToCollections({
+                id: questionId,
+            });
+
+            if (success) {
+                const nextSaved = Boolean(data?.saved);
+                setIsSaved(nextSaved);
+                toast.success(
+                    nextSaved
+                        ? "Added to collections"
+                        : "Removed from collections",
+                );
+            } else {
+                toast.error(error?.message || "Failed to update collection");
+            }
+        } catch {
+            toast.error("Failed to update collection");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const showSaved = isAuthenticated && isSaved;
 
     return (
         <article className="rounded-xl border border-[#1E293B] bg-[#080F20] p-6 sm:p-7 transition-all duration-200 hover:border-[#334155]">
-            <Link
-                href={ROUTES.QUESTION(_id.toString())}
-                className="group block"
-            >
-                <h3 className="line-clamp-2 text-[17px] font-semibold leading-6 text-[#F1F5F9] transition-colors group-hover:text-[#FF8A00]">
-                    {title}
-                </h3>
-            </Link>
+            <div className="flex justify-between items-start gap-3">
+                <Link
+                    href={ROUTES.QUESTION(questionId)}
+                    className="group block"
+                >
+                    <h3 className="line-clamp-2 text-[17px] font-semibold leading-6 text-[#F1F5F9] transition-colors group-hover:text-[#FF8A00]">
+                        {title}
+                    </h3>
+                </Link>
+
+                <button
+                    type="button"
+                    disabled={loading}
+                    onClick={handleAddToCollection}
+                    aria-pressed={showSaved}
+                    aria-label={
+                        showSaved
+                            ? "Remove from collection"
+                            : "Save to collection"
+                    }
+                    className="shrink-0 rounded-md p-1 text-[#94A3B8] transition-colors hover:bg-[#111B30] hover:text-[#FF8A00] disabled:opacity-50"
+                >
+                    <Star
+                        fill={showSaved ? "#FF8A00" : "none"}
+                        className={`h-4 w-4 ${showSaved ? "text-[#FF8A00]" : ""}`}
+                    />
+                </button>
+            </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
                 {tags.map((tag) => (
@@ -49,7 +142,7 @@ const QuestionCard = ({ question }: QuestionCardProps) => {
                 {/* Author */}
                 <div className="flex items-center gap-2">
                     <Link
-                        href={ROUTES.PROFILE(author._id)}
+                        href={ROUTES.PROFILE(author._id.toString())}
                         className="flex gap-2 items-center text-sm"
                     >
                         {author.image ? (

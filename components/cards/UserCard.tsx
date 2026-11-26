@@ -53,15 +53,13 @@ const UserCard = ({ user }: UserCardProps) => {
                 </span>
 
                 {user.location ? (
-                    <span className="truncate max-w-[140px]">
-                        {user.location}
-                    </span>
+                    <span className="truncate max-w-35">{user.location}</span>
                 ) : user.portfolio ? (
                     <a
                         href={user.portfolio}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="truncate max-w-[140px] text-amber-400 hover:underline"
+                        className="truncate max-w-35 text-amber-400 hover:underline"
                     >
                         Portfolio ↗
                     </a>
