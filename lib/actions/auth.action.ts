@@ -5,13 +5,23 @@ import mongoose from "mongoose";
 
 import { signIn } from "@/auth";
 import Account from "@/database/account.model";
-import User from "@/database/user.model";
+import User, { IUser } from "@/database/user.model";
 
 import handleError from "../handlers/error";
 import { NotFoundError } from "../http-errors";
-import { ActionResponse, AuthCredentials, ErrorResponse } from "@/types/global";
+import {
+    ActionResponse,
+    AuthCredentials,
+    ErrorResponse,
+    PaginatedSearchParams,
+} from "@/types/global";
 import { action } from "../handlers/action";
-import { loginSchema, registerSchema } from "../validations";
+import {
+    loginSchema,
+    PaginatedSearchParamsSchema,
+    registerSchema,
+} from "../validations";
+import { connection } from "next/server";
 
 export async function signUpWithCredentials(
     params: AuthCredentials,
@@ -109,6 +119,72 @@ export async function signInWithCredentials(
         await signIn("credentials", { email, password, redirect: false });
 
         return { success: true };
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
+    }
+}
+
+export async function getAllUsers(
+    params: PaginatedSearchParams,
+): Promise<ActionResponse<{ users: IUser[]; isNext: boolean }>> {
+    await connection();
+    const validationResult = await action({
+        params,
+        schema: PaginatedSearchParamsSchema,
+    });
+    if (validationResult instanceof Error) {
+        return handleError(validationResult) as ErrorResponse;
+    }
+
+    const { query, filter, page = 1, pageSize = 10 } = validationResult.params;
+    const currentPage = Math.max(1, Number(page) || 1);
+    const limit = Math.max(1, Number(pageSize) || 10);
+    const skip = (currentPage - 1) * limit;
+
+    const filterQuery: Record<string, unknown> = {};
+
+    if (query && query.trim() !== "") {
+        const escapedQuery = query
+            .trim()
+            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        filterQuery.$or = [
+            { name: { $regex: new RegExp(escapedQuery, "i") } },
+            { username: { $regex: new RegExp(escapedQuery, "i") } },
+        ];
+    }
+
+    let sortCriteria: Record<string, 1 | -1> = { createdAt: -1 };
+    switch (filter) {
+        case "latest":
+            sortCriteria = { createdAt: -1 };
+            break;
+        case "oldest":
+            sortCriteria = { createdAt: 1 };
+            break;
+        case "popular":
+            sortCriteria = { reputation: -1 };
+            break;
+        default:
+            sortCriteria = { createdAt: -1 };
+    }
+
+    try {
+        const totalUsers = await User.countDocuments(filterQuery);
+        const users = await User.find(filterQuery)
+            .lean()
+            .sort(sortCriteria)
+            .skip(skip)
+            .limit(limit);
+
+        const isNext = totalUsers > skip + users.length;
+
+        return {
+            success: true,
+            data: {
+                users: JSON.parse(JSON.stringify(users)),
+                isNext,
+            },
+        };
     } catch (error) {
         return handleError(error) as ErrorResponse;
     }

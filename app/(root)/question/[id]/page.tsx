@@ -1,4 +1,4 @@
-import { Suspense, type ComponentType } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -151,7 +151,7 @@ async function QuestionContent({ params, searchParams }: RouteParams) {
                     <QuestionActions
                         targetType={"question"}
                         hasVotedPromise={hasVotedPromise}
-                        questionId={question._id.toString()}
+                        targetId={question._id.toString()}
                         initialUpvotes={question.upvotes ?? 0}
                         initialDownvotes={question.downvotes ?? 0}
                     />

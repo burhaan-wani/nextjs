@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 interface QuestionActionsProps {
     hasVotedPromise: Promise<ActionResponse<HasVotedResponse>>;
-    questionId: string;
+    targetId: string;
     initialUpvotes: number;
     initialDownvotes: number;
     targetType: "question" | "answer";
@@ -17,12 +17,11 @@ interface QuestionActionsProps {
 
 const QuestionActions = ({
     hasVotedPromise,
-    questionId,
+    targetId,
     initialUpvotes,
     initialDownvotes,
     targetType,
 }: QuestionActionsProps) => {
-    const router = useRouter();
     const { data: sessionData, status } = useSession();
     const userId = sessionData?.user?.id;
     const isLoggedIn = Boolean(userId);
@@ -41,7 +40,6 @@ const QuestionActions = ({
     );
     const [loading, setLoading] = useState(false);
 
-    // Always sync real counts from server props
     useEffect(() => {
         setUpvotes(initialUpvotes);
     }, [initialUpvotes]);
@@ -50,7 +48,6 @@ const QuestionActions = ({
         setDownvotes(initialDownvotes);
     }, [initialDownvotes]);
 
-    // Reset active vote highlight if logged out or session changes
     useEffect(() => {
         if (status === "loading") return;
 
@@ -72,7 +69,7 @@ const QuestionActions = ({
         setLoading(true);
         try {
             const result = await createVote({
-                targetId: questionId,
+                targetId: targetId,
                 targetType,
                 voteType,
             });
@@ -111,9 +108,6 @@ const QuestionActions = ({
                     toast.success("Downvote added");
                 }
             }
-
-            // Re-sync with server-rendered counts from the DB
-            router.refresh();
         } catch {
             toast.error("Failed to vote");
         } finally {

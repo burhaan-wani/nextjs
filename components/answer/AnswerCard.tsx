@@ -1,102 +1,179 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+
 import ROUTES from "@/constants/routes";
 import MarkdownContent from "@/components/questions/MarkdownContent";
 import MetricTimestamp from "../cards/MetricTimestamp";
 import { IAnswer } from "@/types/global";
-
-export interface AnswerItem {
-    _id: string;
-    content: string;
-    upvotes?: number;
-    downvotes?: number;
-    createdAt: string | Date;
-    author: {
-        _id: string;
-        name: string;
-        image?: string;
-    };
-}
+import { createVote, hasVoted } from "@/lib/actions/vote.action";
 
 interface AnswerCardProps {
     answer: IAnswer;
-    onUpvote?: (answerId: string) => Promise<{ success: boolean } | void>;
-    onDownvote?: (answerId: string) => Promise<{ success: boolean } | void>;
+    initialUpvotes?: number;
+    initialDownvotes?: number;
+    targetType?: "question" | "answer";
 }
 
-const AnswerCard = ({ answer, onUpvote, onDownvote }: AnswerCardProps) => {
-    const [upvotes, setUpvotes] = useState(answer.upvotes ?? 0);
-    const [downvotes, setDownvotes] = useState(answer.downvotes ?? 0);
-    const [voteState, setVoteState] = useState<"up" | "down" | null>(null);
-    const [isPending, startTransition] = useTransition();
+const AnswerCard = ({
+    answer,
+    initialUpvotes,
+    initialDownvotes,
+    targetType = "answer",
+}: AnswerCardProps) => {
+    const router = useRouter();
+    const { data: sessionData, status } = useSession();
+
+    const currentUserId = sessionData?.user?.id;
+    const isAuthenticated =
+        status === "authenticated" && Boolean(currentUserId);
+
+    const serverUpvotes = initialUpvotes ?? answer.upvotes ?? 0;
+    const serverDownvotes = initialDownvotes ?? answer.downvotes ?? 0;
+
+    const [upvotes, setUpvotes] = useState<number>(serverUpvotes);
+    const [downvotes, setDownvotes] = useState<number>(serverDownvotes);
+    const [hasUpvoted, setHasUpvoted] = useState<boolean>(false);
+    const [hasDownvoted, setHasDownvoted] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
 
     const answerId = answer._id.toString();
-    const authorId = answer.author?._id?.toString() ?? "";
+    const answerAuthorId = answer.author?._id?.toString();
     const authorInitial = answer.author?.name?.[0]?.toUpperCase() ?? "?";
 
-    const handleUpvote = () => {
-        startTransition(async () => {
-            const prevUp = upvotes;
-            const prevDown = downvotes;
-            const prevState = voteState;
+    // Sync real counts from server whenever props update
+    useEffect(() => {
+        setUpvotes(serverUpvotes);
+    }, [serverUpvotes]);
 
-            if (voteState === "up") {
-                setVoteState(null);
-                setUpvotes((v) => Math.max(0, v - 1));
+    useEffect(() => {
+        setDownvotes(serverDownvotes);
+    }, [serverDownvotes]);
+
+    // Load user's vote status only when authenticated; wipe immediately when not
+    useEffect(() => {
+        if (!isAuthenticated || !currentUserId) {
+            setHasUpvoted(false);
+            setHasDownvoted(false);
+            return;
+        }
+
+        let isCurrent = true;
+        const activeUserId = currentUserId;
+
+        const loadVoteState = async () => {
+            try {
+                const res = await hasVoted({
+                    targetId: answerId,
+                    targetType: "answer",
+                });
+
+                if (
+                    !isCurrent ||
+                    status !== "authenticated" ||
+                    sessionData?.user?.id !== activeUserId
+                ) {
+                    return;
+                }
+
+                if (res?.success && res.data) {
+                    setHasUpvoted(Boolean(res.data.hasUpvoted));
+                    setHasDownvoted(Boolean(res.data.hasDownvoted));
+                } else {
+                    setHasUpvoted(false);
+                    setHasDownvoted(false);
+                }
+            } catch {
+                if (isCurrent) {
+                    setHasUpvoted(false);
+                    setHasDownvoted(false);
+                }
+            }
+        };
+
+        loadVoteState();
+
+        return () => {
+            isCurrent = false;
+        };
+    }, [
+        answerId,
+        isAuthenticated,
+        currentUserId,
+        status,
+        sessionData?.user?.id,
+    ]);
+
+    const handleVote = async (voteType: "upvote" | "downvote") => {
+        if (!isAuthenticated) {
+            toast.error("Only logged in user can vote.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await createVote({
+                targetId: answerId,
+                targetType,
+                voteType,
+            });
+
+            if (!result.success) {
+                toast.error(result.error?.message || "Failed to vote");
+                return;
+            }
+
+            if (voteType === "upvote") {
+                if (hasUpvoted) {
+                    setUpvotes((prev) => Math.max(0, prev - 1));
+                    setHasUpvoted(false);
+                    toast.success("Upvote removed successfully");
+                } else {
+                    setUpvotes((prev) => prev + 1);
+                    setHasUpvoted(true);
+                    if (hasDownvoted) {
+                        setDownvotes((prev) => Math.max(0, prev - 1));
+                        setHasDownvoted(false);
+                    }
+                    toast.success("Upvote added successfully");
+                }
             } else {
-                setVoteState("up");
-                setUpvotes((v) => v + 1);
-                if (voteState === "down") {
-                    setDownvotes((v) => Math.max(0, v - 1));
+                if (hasDownvoted) {
+                    setDownvotes((prev) => Math.max(0, prev - 1));
+                    setHasDownvoted(false);
+                    toast.success("Downvote removed");
+                } else {
+                    setDownvotes((prev) => prev + 1);
+                    setHasDownvoted(true);
+                    if (hasUpvoted) {
+                        setUpvotes((prev) => Math.max(0, prev - 1));
+                        setHasUpvoted(false);
+                    }
+                    toast.success("Downvote added");
                 }
             }
 
-            try {
-                await onUpvote?.(answerId);
-            } catch {
-                setUpvotes(prevUp);
-                setDownvotes(prevDown);
-                setVoteState(prevState);
-            }
-        });
+            router.refresh();
+        } catch {
+            toast.error("Failed to vote");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleDownvote = () => {
-        startTransition(async () => {
-            const prevUp = upvotes;
-            const prevDown = downvotes;
-            const prevState = voteState;
-
-            if (voteState === "down") {
-                setVoteState(null);
-                setDownvotes((v) => Math.max(0, v - 1));
-            } else {
-                setVoteState("down");
-                setDownvotes((v) => v + 1);
-                if (voteState === "up") {
-                    setUpvotes((v) => Math.max(0, v - 1));
-                }
-            }
-
-            try {
-                await onDownvote?.(answerId);
-            } catch {
-                setUpvotes(prevUp);
-                setDownvotes(prevDown);
-                setVoteState(prevState);
-            }
-        });
-    };
+    const showUpvoted = isAuthenticated && hasUpvoted;
+    const showDownvoted = isAuthenticated && hasDownvoted;
 
     return (
         <div className="rounded-xl border border-[#1E293B] bg-[#0B1326] p-5 sm:p-6">
-            {/* Answer Header: Author + Votes */}
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#1E293B] pb-4">
                 <Link
-                    href={authorId ? ROUTES.PROFILE(authorId) : "#"}
+                    href={answerAuthorId ? ROUTES.PROFILE(answerAuthorId) : "#"}
                     className="inline-flex items-center gap-3 text-sm"
                 >
                     {answer.author?.image ? (
@@ -124,15 +201,14 @@ const AnswerCard = ({ answer, onUpvote, onDownvote }: AnswerCardProps) => {
                     </div>
                 </Link>
 
-                {/* Upvote / Downvote Controls */}
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
-                        disabled={isPending}
-                        onClick={handleUpvote}
-                        aria-pressed={voteState === "up"}
+                        disabled={loading}
+                        onClick={() => handleVote("upvote")}
+                        aria-pressed={showUpvoted}
                         className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                            voteState === "up"
+                            showUpvoted
                                 ? "border-[#FF8A00] bg-[#FF8A00]/15 text-[#FF8A00]"
                                 : "border-[#1E293B] bg-[#111B30] text-[#CBD5E1] hover:border-[#334155] hover:text-white"
                         }`}
@@ -146,11 +222,11 @@ const AnswerCard = ({ answer, onUpvote, onDownvote }: AnswerCardProps) => {
 
                     <button
                         type="button"
-                        disabled={isPending}
-                        onClick={handleDownvote}
-                        aria-pressed={voteState === "down"}
+                        disabled={loading}
+                        onClick={() => handleVote("downvote")}
+                        aria-pressed={showDownvoted}
                         className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                            voteState === "down"
+                            showDownvoted
                                 ? "border-rose-500/70 bg-rose-500/15 text-rose-300"
                                 : "border-[#1E293B] bg-[#111B30] text-[#CBD5E1] hover:border-[#334155] hover:text-white"
                         }`}
@@ -164,7 +240,6 @@ const AnswerCard = ({ answer, onUpvote, onDownvote }: AnswerCardProps) => {
                 </div>
             </div>
 
-            {/* Answer Body */}
             <div className="mt-4">
                 <MarkdownContent content={answer.content} />
             </div>

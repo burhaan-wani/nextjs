@@ -1,8 +1,10 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import AnswerCard, { AnswerItem } from "./AnswerCard";
+import AnswerCard from "./AnswerCard";
 import { IAnswer } from "@/types/global";
+import { hasVoted } from "@/lib/actions/vote.action";
+import { Suspense } from "react";
 
 interface AnswersSectionProps {
     answers: IAnswer[];
@@ -98,10 +100,17 @@ const AnswersSection = ({
             {!hasError && answers.length > 0 && (
                 <div className="mt-5 space-y-4">
                     {answers.map((answer) => (
-                        <AnswerCard
+                        <Suspense
                             key={answer._id.toString()}
-                            answer={answer}
-                        />
+                            fallback={<div>Loading...</div>}
+                        >
+                            <AnswerCard
+                                answer={answer}
+                                initialUpvotes={answer.upvotes ?? 0}
+                                initialDownvotes={answer.downvotes ?? 0}
+                                targetType="answer"
+                            />
+                        </Suspense>
                     ))}
                 </div>
             )}
