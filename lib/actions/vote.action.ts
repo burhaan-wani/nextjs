@@ -4,13 +4,21 @@ import {
     ActionResponse,
     CreateVoteParams,
     ErrorResponse,
+    HasVotedParams,
+    HasVotedResponse,
     UpdateVoteCountParams,
 } from "@/types/global";
 import { action } from "../handlers/action";
-import { createVoteShema, updateVoteSchema } from "../validations";
+import {
+    createVoteShema,
+    hasVotedSchema,
+    updateVoteSchema,
+} from "../validations";
 import handleError from "../handlers/error";
 import mongoose, { ClientSession } from "mongoose";
 import { Answer, Question, Vote } from "@/database";
+import { revalidatePath } from "next/cache";
+import ROUTES from "@/constants/routes";
 
 export async function updateVote(
     params: UpdateVoteCountParams,
@@ -91,6 +99,15 @@ export async function createVote(
                     {
                         targetId,
                         targetType,
+                        voteType: existingVote.voteType,
+                        change: -1,
+                    },
+                    session,
+                );
+                await updateVote(
+                    {
+                        targetId,
+                        targetType,
                         voteType,
                         change: 1,
                     },
@@ -119,6 +136,7 @@ export async function createVote(
         }
 
         await session.commitTransaction();
+        revalidatePath(ROUTES.QUESTION_DETAILS(targetId));
 
         return { success: true };
     } catch (error) {
@@ -126,5 +144,45 @@ export async function createVote(
         return handleError(error) as ErrorResponse;
     } finally {
         await session.endSession();
+    }
+}
+
+export async function hasVoted(
+    params: HasVotedParams,
+): Promise<ActionResponse<HasVotedResponse>> {
+    const validationResult = await action({
+        params,
+        schema: hasVotedSchema,
+        authorize: true,
+    });
+
+    if (validationResult instanceof Error) {
+        return handleError(validationResult) as ErrorResponse;
+    }
+    const { targetId, targetType } = validationResult.params;
+    const userId = validationResult.session?.user?.id;
+    try {
+        const vote = await Vote.findOne({
+            actionId: targetId,
+            actionType: targetType,
+            author: userId,
+        });
+
+        if (!vote) {
+            return {
+                success: false,
+                data: { hasUpvoted: false, hasDownvoted: false },
+            };
+        }
+
+        return {
+            success: true,
+            data: {
+                hasUpvoted: vote.voteType === "upvote",
+                hasDownvoted: vote.voteType === "downvote",
+            },
+        };
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
     }
 }

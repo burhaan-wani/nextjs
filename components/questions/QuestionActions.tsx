@@ -1,114 +1,115 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { createVote } from "@/lib/actions/vote.action";
+import { ActionResponse, HasVotedResponse } from "@/types/global";
+import { useSession } from "next-auth/react";
+import { use, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface QuestionActionsProps {
+    hasVotedPromise: Promise<ActionResponse<HasVotedResponse>>;
     questionId: string;
     initialUpvotes: number;
     initialDownvotes: number;
-    initialSaved?: boolean;
-    onUpvote?: (questionId: string) => Promise<{ success: boolean } | void>;
-    onDownvote?: (questionId: string) => Promise<{ success: boolean } | void>;
-    onToggleSave?: (
-        questionId: string,
-    ) => Promise<{ success: boolean; saved?: boolean } | void>;
+    targetType: "question" | "answer";
 }
 
 const QuestionActions = ({
+    hasVotedPromise,
     questionId,
     initialUpvotes,
     initialDownvotes,
-    initialSaved = false,
-    onUpvote,
-    onDownvote,
-    onToggleSave,
+    targetType,
 }: QuestionActionsProps) => {
+    const { data: hasVotedData } = use(hasVotedPromise);
+
     const [upvotes, setUpvotes] = useState(initialUpvotes);
     const [downvotes, setDownvotes] = useState(initialDownvotes);
-    const [voteState, setVoteState] = useState<"up" | "down" | null>(null);
-    const [saved, setSaved] = useState(initialSaved);
-    const [isPending, startTransition] = useTransition();
+    const [hasUpvoted, setHasUpvoted] = useState(
+        Boolean(hasVotedData?.hasUpvoted),
+    );
+    const [hasDownvoted, setHasDownvoted] = useState(
+        Boolean(hasVotedData?.hasDownvoted),
+    );
+    const [loading, setLoading] = useState(false);
 
-    const handleUpvote = () => {
-        startTransition(async () => {
-            const prevUpvotes = upvotes;
-            const prevDownvotes = downvotes;
-            const prevVote = voteState;
+    const session = useSession();
+    const userId = session?.data?.user?.id;
 
-            if (voteState === "up") {
-                setVoteState(null);
-                setUpvotes((v) => Math.max(0, v - 1));
+    useEffect(() => {
+        setUpvotes(initialUpvotes);
+    }, [initialUpvotes]);
+
+    useEffect(() => {
+        setDownvotes(initialDownvotes);
+    }, [initialDownvotes]);
+
+    const handleVote = async (voteType: "upvote" | "downvote") => {
+        if (!userId) {
+            toast.error("Only logged in user can vote.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await createVote({
+                targetId: questionId,
+                targetType,
+                voteType,
+            });
+
+            if (!result.success) {
+                toast.error(result.error?.message || "Failed to vote");
+                return;
+            }
+
+            if (voteType === "upvote") {
+                if (hasUpvoted) {
+                    setUpvotes((prev) => Math.max(0, prev - 1));
+                    setHasUpvoted(false);
+                    toast.success("Upvote removed successfully");
+                } else {
+                    setUpvotes((prev) => prev + 1);
+                    setHasUpvoted(true);
+                    if (hasDownvoted) {
+                        setDownvotes((prev) => Math.max(0, prev - 1));
+                        setHasDownvoted(false);
+                    }
+                    toast.success("Upvote added successfully");
+                }
             } else {
-                setVoteState("up");
-                setUpvotes((v) => v + 1);
-                if (voteState === "down") {
-                    setDownvotes((v) => Math.max(0, v - 1));
+                if (hasDownvoted) {
+                    setDownvotes((prev) => Math.max(0, prev - 1));
+                    setHasDownvoted(false);
+                    toast.success("Downvote removed");
+                } else {
+                    setDownvotes((prev) => prev + 1);
+                    setHasDownvoted(true);
+                    if (hasUpvoted) {
+                        setUpvotes((prev) => Math.max(0, prev - 1));
+                        setHasUpvoted(false);
+                    }
+                    toast.success("Downvote added");
                 }
             }
+        } catch {
+            toast.error("Failed to vote");
+        } finally {
+            setLoading(false);
+        }
+    }; // ✅ handleVote closes here
 
-            try {
-                await onUpvote?.(questionId);
-            } catch {
-                setUpvotes(prevUpvotes);
-                setDownvotes(prevDownvotes);
-                setVoteState(prevVote);
-            }
-        });
-    };
-
-    const handleDownvote = () => {
-        startTransition(async () => {
-            const prevUpvotes = upvotes;
-            const prevDownvotes = downvotes;
-            const prevVote = voteState;
-
-            if (voteState === "down") {
-                setVoteState(null);
-                setDownvotes((v) => Math.max(0, v - 1));
-            } else {
-                setVoteState("down");
-                setDownvotes((v) => v + 1);
-                if (voteState === "up") {
-                    setUpvotes((v) => Math.max(0, v - 1));
-                }
-            }
-
-            try {
-                await onDownvote?.(questionId);
-            } catch {
-                setUpvotes(prevUpvotes);
-                setDownvotes(prevDownvotes);
-                setVoteState(prevVote);
-            }
-        });
-    };
-
-    const handleSave = () => {
-        startTransition(async () => {
-            const prevSaved = saved;
-            setSaved(!prevSaved);
-
-            try {
-                const res = await onToggleSave?.(questionId);
-                if (res && typeof res.saved === "boolean") {
-                    setSaved(res.saved);
-                }
-            } catch {
-                setSaved(prevSaved);
-            }
-        });
-    };
-
+    // ✅ Component return is at the top level of QuestionActions
     return (
         <div className="flex flex-wrap items-center gap-2">
             {/* Upvote */}
             <button
                 type="button"
-                disabled={isPending}
-                onClick={handleUpvote}
-                aria-pressed={voteState === "up"}
+                disabled={loading}
+                onClick={() => handleVote("upvote")}
+                aria-pressed={hasUpvoted}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                    voteState === "up"
+                    hasUpvoted
                         ? "border-[#FF8A00] bg-[#FF8A00]/15 text-[#FF8A00]"
                         : "border-[#1E293B] bg-[#111B30] text-[#CBD5E1] hover:border-[#334155] hover:text-white"
                 }`}
@@ -123,11 +124,11 @@ const QuestionActions = ({
             {/* Downvote */}
             <button
                 type="button"
-                disabled={isPending}
-                onClick={handleDownvote}
-                aria-pressed={voteState === "down"}
+                disabled={loading}
+                onClick={() => handleVote("downvote")}
+                aria-pressed={hasDownvoted}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                    voteState === "down"
+                    hasDownvoted
                         ? "border-rose-500/70 bg-rose-500/15 text-rose-300"
                         : "border-[#1E293B] bg-[#111B30] text-[#CBD5E1] hover:border-[#334155] hover:text-white"
                 }`}
@@ -137,22 +138,6 @@ const QuestionActions = ({
                 <span className="rounded bg-[#080F20] px-1.5 py-0.5 text-[11px] text-[#F1F5F9]">
                     {downvotes}
                 </span>
-            </button>
-
-            {/* Add to Collection */}
-            <button
-                type="button"
-                disabled={isPending}
-                onClick={handleSave}
-                aria-pressed={saved}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                    saved
-                        ? "border-amber-400/70 bg-amber-400/15 text-amber-300"
-                        : "border-[#1E293B] bg-[#111B30] text-[#CBD5E1] hover:border-[#334155] hover:text-white"
-                }`}
-            >
-                <span>{saved ? "★" : "☆"}</span>
-                <span>{saved ? "Saved" : "Save to Collection"}</span>
             </button>
         </div>
     );

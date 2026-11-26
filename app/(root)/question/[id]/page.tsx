@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, type ComponentType } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -16,6 +16,11 @@ import MetricTimestamp from "@/components/cards/MetricTimestamp";
 import { after } from "next/server";
 import AnswerForm from "@/components/answer/AnswerForm";
 import AnswersSection from "@/components/answer/AnswerSection";
+import { hasVoted } from "@/lib/actions/vote.action";
+
+const RenderableQuestionActions = QuestionActions as unknown as ComponentType<
+    Parameters<typeof QuestionActions>[0]
+>;
 
 function QuestionDetailsFallback() {
     return (
@@ -67,6 +72,8 @@ async function QuestionContent({ params, searchParams }: RouteParams) {
         pageSize: 10,
         filter,
     });
+
+    const hasVotedPromise = hasVoted({ targetId: id, targetType: "question" });
 
     const question = data;
     const authorInitial = question.author?.name?.[0]?.toUpperCase() ?? "?";
@@ -144,11 +151,15 @@ async function QuestionContent({ params, searchParams }: RouteParams) {
                     </div>
                 </Link>
 
-                <QuestionActions
-                    questionId={question._id.toString()}
-                    initialUpvotes={question.upvotes ?? 0}
-                    initialDownvotes={question.downvotes ?? 0}
-                />
+                <Suspense fallback={<div>Loading...</div>}>
+                    <QuestionActions
+                        targetType={"question"}
+                        hasVotedPromise={hasVotedPromise}
+                        questionId={question._id.toString()}
+                        initialUpvotes={question.upvotes ?? 0}
+                        initialDownvotes={question.downvotes ?? 0}
+                    />
+                </Suspense>
             </div>
 
             {/* Body Content (Markdown + Syntax-Highlighted Code Blocks) */}

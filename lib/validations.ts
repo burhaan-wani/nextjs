@@ -142,3 +142,8 @@ export const createVoteShema = z.object({
 export const updateVoteSchema = createVoteShema.extend({
     change: z.number().int().min(-1).max(1),
 });
+
+export const hasVotedSchema = createVoteShema.pick({
+    targetId: true,
+    targetType: true,
+});
