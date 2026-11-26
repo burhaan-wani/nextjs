@@ -18,10 +18,6 @@ import AnswerForm from "@/components/answer/AnswerForm";
 import AnswersSection from "@/components/answer/AnswerSection";
 import { hasVoted } from "@/lib/actions/vote.action";
 
-const RenderableQuestionActions = QuestionActions as unknown as ComponentType<
-    Parameters<typeof QuestionActions>[0]
->;
-
 function QuestionDetailsFallback() {
     return (
         <div className="space-y-6 rounded-xl border border-[#1E293B] bg-[#080F20] p-6 sm:p-8">

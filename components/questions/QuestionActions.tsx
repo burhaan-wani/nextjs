@@ -3,6 +3,7 @@
 import { createVote } from "@/lib/actions/vote.action";
 import { ActionResponse, HasVotedResponse } from "@/types/global";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -21,21 +22,26 @@ const QuestionActions = ({
     initialDownvotes,
     targetType,
 }: QuestionActionsProps) => {
+    const router = useRouter();
+    const { data: sessionData, status } = useSession();
+    const userId = sessionData?.user?.id;
+    const isLoggedIn = Boolean(userId);
+
     const { data: hasVotedData } = use(hasVotedPromise);
 
     const [upvotes, setUpvotes] = useState(initialUpvotes);
     const [downvotes, setDownvotes] = useState(initialDownvotes);
+
+    // Only treat vote state as active when a user is logged in
     const [hasUpvoted, setHasUpvoted] = useState(
-        Boolean(hasVotedData?.hasUpvoted),
+        isLoggedIn ? Boolean(hasVotedData?.hasUpvoted) : false,
     );
     const [hasDownvoted, setHasDownvoted] = useState(
-        Boolean(hasVotedData?.hasDownvoted),
+        isLoggedIn ? Boolean(hasVotedData?.hasDownvoted) : false,
     );
     const [loading, setLoading] = useState(false);
 
-    const session = useSession();
-    const userId = session?.data?.user?.id;
-
+    // Always sync real counts from server props
     useEffect(() => {
         setUpvotes(initialUpvotes);
     }, [initialUpvotes]);
@@ -44,8 +50,21 @@ const QuestionActions = ({
         setDownvotes(initialDownvotes);
     }, [initialDownvotes]);
 
+    // Reset active vote highlight if logged out or session changes
+    useEffect(() => {
+        if (status === "loading") return;
+
+        if (!isLoggedIn) {
+            setHasUpvoted(false);
+            setHasDownvoted(false);
+        } else {
+            setHasUpvoted(Boolean(hasVotedData?.hasUpvoted));
+            setHasDownvoted(Boolean(hasVotedData?.hasDownvoted));
+        }
+    }, [isLoggedIn, status, hasVotedData]);
+
     const handleVote = async (voteType: "upvote" | "downvote") => {
-        if (!userId) {
+        if (!isLoggedIn) {
             toast.error("Only logged in user can vote.");
             return;
         }
@@ -92,14 +111,19 @@ const QuestionActions = ({
                     toast.success("Downvote added");
                 }
             }
+
+            // Re-sync with server-rendered counts from the DB
+            router.refresh();
         } catch {
             toast.error("Failed to vote");
         } finally {
             setLoading(false);
         }
-    }; // ✅ handleVote closes here
+    };
 
-    // ✅ Component return is at the top level of QuestionActions
+    const showUpvoted = isLoggedIn && hasUpvoted;
+    const showDownvoted = isLoggedIn && hasDownvoted;
+
     return (
         <div className="flex flex-wrap items-center gap-2">
             {/* Upvote */}
@@ -107,9 +131,9 @@ const QuestionActions = ({
                 type="button"
                 disabled={loading}
                 onClick={() => handleVote("upvote")}
-                aria-pressed={hasUpvoted}
+                aria-pressed={showUpvoted}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                    hasUpvoted
+                    showUpvoted
                         ? "border-[#FF8A00] bg-[#FF8A00]/15 text-[#FF8A00]"
                         : "border-[#1E293B] bg-[#111B30] text-[#CBD5E1] hover:border-[#334155] hover:text-white"
                 }`}
@@ -126,9 +150,9 @@ const QuestionActions = ({
                 type="button"
                 disabled={loading}
                 onClick={() => handleVote("downvote")}
-                aria-pressed={hasDownvoted}
+                aria-pressed={showDownvoted}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                    hasDownvoted
+                    showDownvoted
                         ? "border-rose-500/70 bg-rose-500/15 text-rose-300"
                         : "border-[#1E293B] bg-[#111B30] text-[#CBD5E1] hover:border-[#334155] hover:text-white"
                 }`}
