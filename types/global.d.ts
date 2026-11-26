@@ -109,3 +109,12 @@ interface IAnswer {
     createdAt: Date;
     updatedAt: Date;
 }
+
+interface CreateVoteParams {
+    targetId: string;
+    targetType: "question" | "answer";
+    voteType: "upvote" | "downvote";
+}
+interface UpdateVoteCountParams extends CreateVoteParams {
+    change: 1 | -1;
+}
