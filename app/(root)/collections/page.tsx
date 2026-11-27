@@ -7,6 +7,7 @@ import ROUTES from "@/constants/routes";
 import { getSavedQuestions } from "@/lib/actions/collection.action";
 import { RouteParams, TQuestion } from "@/types/global";
 import { Suspense } from "react";
+import Pagination from "@/components/pagination";
 
 const COLLECTION_FILTERS = [
     { label: "Recently Saved", value: "" },
@@ -131,12 +132,18 @@ const Collections = async ({ searchParams }: RouteParams) => {
                 ) : (
                     <>
                         <div className="flex flex-col gap-5">
-                            {questions.map((question) => (
-                                <QuestionCard
-                                    key={question._id.toString()}
-                                    question={question}
+                            <>
+                                {questions.map((question) => (
+                                    <QuestionCard
+                                        key={question._id.toString()}
+                                        question={question}
+                                    />
+                                ))}
+                                <Pagination
+                                    page={page}
+                                    isNext={Boolean(isNext)}
                                 />
-                            ))}
+                            </>
                         </div>
 
                         {/* Pagination */}

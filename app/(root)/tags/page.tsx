@@ -5,6 +5,8 @@ import { getTags } from "@/lib/actions/tag.action";
 import { getTagDefinition } from "@/lib/tag-definitions";
 import { RouteParams, Tag } from "@/types/global";
 import SearchBar from "@/components/search/SearchBar";
+import { TAG_FILTERS } from "@/constants/filters";
+import CommonFilter from "@/components/filters/CommonFilter";
 
 interface TagItem {
     _id: string;
@@ -180,11 +182,16 @@ const Tags = ({ searchParams }: RouteParams) => {
                     <h1 className="font-bold text-2xl">All Questions</h1>
                 </div>
 
-                <div className="mt-6">
+                <div className="mt-6 flex justify-between gap-3">
                     <SearchBar
                         route={ROUTES.TAGS}
                         className="w-full"
                         placeHolder="Search by tag name..."
+                    />
+                    <CommonFilter
+                        filters={TAG_FILTERS}
+                        placeholder="Sort tags"
+                        containerClasses="sm:w-[200px]"
                     />
                 </div>
             </div>

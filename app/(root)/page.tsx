@@ -5,8 +5,9 @@ import { Button } from "@base-ui/react";
 import Link from "next/link";
 import QuestionCard from "@/components/cards/QuestionCard";
 import { getQuestions } from "@/lib/actions/question.action";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 import { RouteParams } from "@/types/global";
+import Pagination from "@/components/pagination";
 
 async function QuestionList({
     searchParams,
@@ -19,14 +20,20 @@ async function QuestionList({
         page: Number(page) || 1,
         pageSize: Number(pageSize) || 10,
     });
-    const { questions } = result.data || {};
+    const { questions, isNext } = result.data || {};
     if (!result.success || !result.data) {
         return <p>Could not load questions.</p>;
     }
 
     return questions && questions.length > 0 ? (
         questions.map((question) => (
-            <QuestionCard key={question._id.toString()} question={question} />
+            <React.Fragment key={question._id.toString()}>
+                <QuestionCard
+                    key={question._id.toString()}
+                    question={question}
+                />
+                <Pagination page={page} isNext={Boolean(isNext)} />
+            </React.Fragment>
         ))
     ) : (
         <div className="text-center py-12 text-muted-foreground">
@@ -38,7 +45,7 @@ async function QuestionList({
     );
 }
 
-export default function Home({ searchParams }: RouteParams) {
+export default async function Home({ searchParams }: RouteParams) {
     return (
         <section className="">
             <div className="flex justify-between items-center">
