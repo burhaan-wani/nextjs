@@ -8,20 +8,23 @@ import Account from "@/database/account.model";
 import User, { IUser } from "@/database/user.model";
 
 import handleError from "../handlers/error";
-import { NotFoundError } from "../http-errors";
+import { NotFoundError, UnauthorizedError } from "../http-errors";
 import {
     ActionResponse,
     AuthCredentials,
     ErrorResponse,
     PaginatedSearchParams,
+    ProfileParams,
 } from "@/types/global";
 import { action } from "../handlers/action";
 import {
     loginSchema,
     PaginatedSearchParamsSchema,
+    profileSchema,
     registerSchema,
 } from "../validations";
 import { connection } from "next/server";
+import { Answer, Question } from "@/database";
 
 export async function signUpWithCredentials(
     params: AuthCredentials,
@@ -183,6 +186,49 @@ export async function getAllUsers(
             data: {
                 users: JSON.parse(JSON.stringify(users)),
                 isNext,
+            },
+        };
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
+    }
+}
+
+export async function getUserProfile(params: ProfileParams): Promise<
+    ActionResponse<{
+        user: IUser;
+        totalQuestions: number;
+        totalAnswers: number;
+    }>
+> {
+    const validationResult = await action({ params, schema: profileSchema });
+
+    if (validationResult instanceof Error) {
+        return handleError(validationResult) as ErrorResponse;
+    }
+
+    const { userId } = validationResult.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return handleError(new NotFoundError("User")) as ErrorResponse;
+    }
+
+    try {
+        const user = await User.findById(userId).lean();
+        if (!user) {
+            throw new NotFoundError("User");
+        }
+
+        const [totalQuestions, totalAnswers] = await Promise.all([
+            Question.countDocuments({ author: userId }),
+            Answer.countDocuments({ author: userId }),
+        ]);
+
+        return {
+            success: true,
+            data: {
+                user: JSON.parse(JSON.stringify(user)),
+                totalQuestions,
+                totalAnswers,
             },
         };
     } catch (error) {

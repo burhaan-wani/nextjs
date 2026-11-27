@@ -125,3 +125,7 @@ interface HasVotedResponse {
     hasUpvoted: boolean;
     hasDownvoted: boolean;
 }
+
+interface ProfileParams {
+    userId: string;
+}

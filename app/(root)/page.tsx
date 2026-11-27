@@ -9,6 +9,8 @@ import React, { Suspense } from "react";
 import { RouteParams } from "@/types/global";
 import Pagination from "@/components/pagination";
 
+export const instant = false;
+
 async function QuestionList({
     searchParams,
 }: Pick<RouteParams, "searchParams">) {
@@ -20,28 +22,33 @@ async function QuestionList({
         page: Number(page) || 1,
         pageSize: Number(pageSize) || 10,
     });
+
     const { questions, isNext } = result.data || {};
     if (!result.success || !result.data) {
         return <p>Could not load questions.</p>;
     }
 
-    return questions && questions.length > 0 ? (
-        questions.map((question) => (
-            <React.Fragment key={question._id.toString()}>
-                <QuestionCard
-                    key={question._id.toString()}
-                    question={question}
-                />
-                <Pagination page={page} isNext={Boolean(isNext)} />
-            </React.Fragment>
-        ))
-    ) : (
-        <div className="text-center py-12 text-muted-foreground">
-            <p className="text-lg font-medium">No questions found</p>
-            <p className="text-sm mt-1">
-                Try searching for something else or ask a new question.
-            </p>
-        </div>
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            {questions && questions.length > 0 ? (
+                questions.map((question) => (
+                    <React.Fragment key={question._id.toString()}>
+                        <QuestionCard
+                            key={question._id.toString()}
+                            question={question}
+                        />
+                        <Pagination page={page} isNext={Boolean(isNext)} />
+                    </React.Fragment>
+                ))
+            ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                    <p className="text-lg font-medium">No questions found</p>
+                    <p className="text-sm mt-1">
+                        Try searching for something else or ask a new question.
+                    </p>
+                </div>
+            )}
+        </Suspense>
     );
 }
 

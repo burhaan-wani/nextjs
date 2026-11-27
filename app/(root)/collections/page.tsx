@@ -145,41 +145,6 @@ const Collections = async ({ searchParams }: RouteParams) => {
                                 />
                             </>
                         </div>
-
-                        {/* Pagination */}
-                        {(page > 1 || isNext) && (
-                            <div className="mt-8 flex items-center justify-center gap-3">
-                                {page > 1 ? (
-                                    <Link
-                                        href={buildPageHref(page - 1)}
-                                        className="rounded-lg border border-[#1E293B] bg-[#080F20] px-4 py-2 text-xs font-semibold text-[#F1F5F9] transition-colors hover:border-[#334155]"
-                                    >
-                                        Previous
-                                    </Link>
-                                ) : (
-                                    <span className="cursor-not-allowed rounded-lg border border-[#1E293B]/60 bg-[#080F20]/50 px-4 py-2 text-xs font-semibold text-[#475569]">
-                                        Previous
-                                    </span>
-                                )}
-
-                                <span className="rounded-lg border border-[#FF8A00]/40 bg-[#FF8A00]/15 px-3.5 py-2 text-xs font-bold text-[#FF8A00]">
-                                    {page}
-                                </span>
-
-                                {isNext ? (
-                                    <Link
-                                        href={buildPageHref(page + 1)}
-                                        className="rounded-lg border border-[#1E293B] bg-[#080F20] px-4 py-2 text-xs font-semibold text-[#F1F5F9] transition-colors hover:border-[#334155]"
-                                    >
-                                        Next
-                                    </Link>
-                                ) : (
-                                    <span className="cursor-not-allowed rounded-lg border border-[#1E293B]/60 bg-[#080F20]/50 px-4 py-2 text-xs font-semibold text-[#475569]">
-                                        Next
-                                    </span>
-                                )}
-                            </div>
-                        )}
                     </>
                 )}
             </div>

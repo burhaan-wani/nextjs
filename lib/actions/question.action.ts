@@ -34,6 +34,7 @@ import {
 } from "../http-errors";
 import { connection } from "next/server";
 import { Answer } from "@/database";
+import connectDB from "../mongoose";
 
 export async function createQuestion(
     params: CreateQuestion,
@@ -479,6 +480,25 @@ export async function getQuestionsAllAnswers(params: GetAnswerParams): Promise<
                 isNext,
                 totalAnswers,
             },
+        };
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
+    }
+}
+
+export async function getPopularQuestion(): Promise<
+    ActionResponse<TQuestion[]>
+> {
+    await connection();
+    try {
+        await connectDB();
+
+        const questions = await Question.find()
+            .sort({ answers: -1, upvotes: -1 })
+            .limit(5);
+        return {
+            success: true,
+            data: JSON.parse(JSON.stringify(questions)),
         };
     } catch (error) {
         return handleError(error) as ErrorResponse;

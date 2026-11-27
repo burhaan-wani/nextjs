@@ -14,6 +14,7 @@ import { Question, Tag } from "@/database";
 import { connection } from "next/server";
 import { NotFoundError } from "../http-errors";
 import { ITag } from "@/database/tag.model";
+import connectDB from "../mongoose";
 
 export async function getTags(
     params: PaginatedSearchParams,
@@ -116,6 +117,21 @@ export async function getTagQuestions(
 
         const isNext = totalQuestion > skip + questions.length;
         return { success: true, data: { tag, questions, isNext } };
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
+    }
+}
+
+export async function getPopularTags(): Promise<ActionResponse<ITag[]>> {
+    try {
+        await connection();
+        await connectDB();
+
+        const tags = await Tag.find().sort({ questions: -1 }).limit(5);
+        return {
+            success: true,
+            data: JSON.parse(JSON.stringify(tags)),
+        };
     } catch (error) {
         return handleError(error) as ErrorResponse;
     }
